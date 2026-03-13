@@ -4,7 +4,7 @@ import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useTickets } from "@/lib/store"
 import { mockCustomers, mockWorkers } from "@/lib/mock-data"
-import { Ticket, Urgency, Status } from "@/types/index"
+import { Ticket, Urgency, Status, Customer } from "@/types/index"
 import {
   LayoutList,
   Inbox,
@@ -92,7 +92,72 @@ function fmtDate(iso: string): string {
   })
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// ─── Searchable Customer Combobox ─────────────────────────────────────────────
+
+function CustomerCombobox({
+  selectedId,
+  onSelect,
+}: {
+  selectedId: string
+  onSelect: (id: string, propertyRef: string) => void
+}) {
+  const selected = mockCustomers.find(c => c.id === selectedId)
+  const [inputText, setInputText] = useState(selected?.full_name ?? "")
+  const [open, setOpen] = useState(false)
+
+  const matches = mockCustomers.filter(c =>
+    !inputText || c.full_name.toLowerCase().includes(inputText.toLowerCase())
+  )
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setInputText(e.target.value)
+    setOpen(true)
+    if (selectedId) onSelect("", "") // clear selection while user types
+  }
+
+  function handleSelect(c: Customer) {
+    setInputText(c.full_name)
+    setOpen(false)
+    onSelect(c.id, c.property_ref)
+  }
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        value={inputText}
+        onChange={handleChange}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        placeholder="Type to search customers..."
+        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        autoComplete="off"
+      />
+      {open && (
+        <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          {matches.length > 0 ? (
+            matches.map(c => (
+              <button
+                key={c.id}
+                type="button"
+                onMouseDown={e => { e.preventDefault(); handleSelect(c) }}
+                className={`w-full text-left px-3 py-2 text-sm text-gray-900 hover:bg-blue-50 transition-colors duration-100 ${
+                  selectedId === c.id ? "bg-blue-50 font-medium" : ""
+                }`}
+              >
+                {c.full_name}
+              </button>
+            ))
+          ) : (
+            <div className="px-3 py-2 text-sm text-gray-400">No customers found</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type FormState = {
   customerId: string
@@ -102,7 +167,7 @@ type FormState = {
   reportedVia: Ticket["reported_via"]
   locationNotes: string
   accessInstructions: string
-  aiSummary: string
+  jobDescription: string
 }
 
 const EMPTY_FORM: FormState = {
@@ -113,7 +178,7 @@ const EMPTY_FORM: FormState = {
   reportedVia: "email",
   locationNotes: "",
   accessInstructions: "",
-  aiSummary: "",
+  jobDescription: "",
 }
 
 const KANBAN_COLUMNS: { status: Status; label: string }[] = [
@@ -123,16 +188,27 @@ const KANBAN_COLUMNS: { status: Status; label: string }[] = [
   { status: "COMPLETED", label: "Completed" },
 ]
 
+const SELECT_CLS =
+  "border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
 export default function DashboardPage() {
   const router = useRouter()
-  const { tickets, addTicket, deleteTicket, addEvent } = useTickets()
+  const { tickets, addTicket, deleteTicket, addEvent, dashboardState, setDashboardState } = useTickets()
 
-  const [view, setView] = useState<"table" | "kanban">("table")
-  const [search, setSearch] = useState("")
-  const [filterStatus, setFilterStatus] = useState("")
-  const [filterJobType, setFilterJobType] = useState("")
-  const [filterUrgency, setFilterUrgency] = useState("")
-  const [activeCard, setActiveCard] = useState<string | null>(null)
+  // Destructure persistent state from context
+  const { view, search, filterStatus, filterJobType, filterUrgency, activeCard } = dashboardState
+
+  // Setters that update context (persisted across navigation)
+  const setView = (v: "table" | "kanban") => setDashboardState(s => ({ ...s, view: v }))
+  const setSearch = (q: string) => setDashboardState(s => ({ ...s, search: q }))
+  const setFilterStatus = (v: string) => setDashboardState(s => ({ ...s, filterStatus: v }))
+  const setFilterJobType = (v: string) => setDashboardState(s => ({ ...s, filterJobType: v }))
+  const setFilterUrgency = (v: string) => setDashboardState(s => ({ ...s, filterUrgency: v }))
+  const setActiveCard = (card: string | null) => setDashboardState(s => ({ ...s, activeCard: card }))
+
+  // Local-only modal state (not persisted)
   const [showAddModal, setShowAddModal] = useState(false)
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
@@ -152,26 +228,26 @@ export default function DashboardPage() {
   )
 
   const statCards = [
-    { key: "total", label: "Total", count: stats.total, icon: <LayoutList size={20} /> },
-    { key: "open", label: "Open", count: stats.open, icon: <Inbox size={20} /> },
-    { key: "assigned", label: "Assigned", count: stats.assigned, icon: <UserCheck size={20} /> },
+    { key: "total",      label: "Total",       count: stats.total,      icon: <LayoutList size={20} /> },
+    { key: "open",       label: "Open",        count: stats.open,       icon: <Inbox size={20} /> },
+    { key: "assigned",   label: "Assigned",    count: stats.assigned,   icon: <UserCheck size={20} /> },
     { key: "inProgress", label: "In Progress", count: stats.inProgress, icon: <Loader2 size={20} /> },
-    { key: "completed", label: "Completed", count: stats.completed, icon: <CheckCircle2 size={20} /> },
-    { key: "overdue", label: "Overdue", count: stats.overdue, icon: <AlertCircle size={20} /> },
+    { key: "completed",  label: "Completed",   count: stats.completed,  icon: <CheckCircle2 size={20} /> },
+    { key: "overdue",    label: "Overdue",     count: stats.overdue,    icon: <AlertCircle size={20} /> },
   ]
 
   // ── Filtered tickets ───────────────────────────────────────────────────────
 
   const filteredTickets = useMemo(() => {
     return tickets.filter(ticket => {
-      if (activeCard === "open" && ticket.status !== "OPEN") return false
-      if (activeCard === "assigned" && ticket.status !== "ASSIGNED") return false
+      if (activeCard === "open"       && ticket.status !== "OPEN")        return false
+      if (activeCard === "assigned"   && ticket.status !== "ASSIGNED")    return false
       if (activeCard === "inProgress" && ticket.status !== "IN_PROGRESS") return false
-      if (activeCard === "completed" && ticket.status !== "COMPLETED") return false
-      if (activeCard === "overdue" && !isOverdue(ticket)) return false
-      if (filterStatus && ticket.status !== filterStatus) return false
-      if (filterJobType && ticket.job_type !== filterJobType) return false
-      if (filterUrgency && ticket.urgency !== filterUrgency) return false
+      if (activeCard === "completed"  && ticket.status !== "COMPLETED")   return false
+      if (activeCard === "overdue"    && !isOverdue(ticket))              return false
+      if (filterStatus   && ticket.status    !== filterStatus)   return false
+      if (filterJobType  && ticket.job_type  !== filterJobType)  return false
+      if (filterUrgency  && ticket.urgency   !== filterUrgency)  return false
       if (search) {
         const customer = mockCustomers.find(c => c.id === ticket.customer_id)
         const q = search.toLowerCase()
@@ -185,19 +261,27 @@ export default function DashboardPage() {
     })
   }, [tickets, activeCard, filterStatus, filterJobType, filterUrgency, search])
 
+  const hasFilters = !!(search || filterStatus || filterJobType || filterUrgency || activeCard)
+
   // ── Handlers ───────────────────────────────────────────────────────────────
 
   function handleCardClick(key: string) {
     if (key === "total") {
       setActiveCard(null)
     } else {
-      setActiveCard(prev => (prev === key ? null : key))
+      setActiveCard(activeCard === key ? null : key)
     }
   }
 
-  function handleCustomerChange(customerId: string) {
-    const customer = mockCustomers.find(c => c.id === customerId)
-    setForm(f => ({ ...f, customerId, property: customer?.property_ref ?? "" }))
+  function clearAllFilters() {
+    setDashboardState(s => ({
+      ...s,
+      search: "",
+      filterStatus: "",
+      filterJobType: "",
+      filterUrgency: "",
+      activeCard: null,
+    }))
   }
 
   function handleAddTicket() {
@@ -216,7 +300,7 @@ export default function DashboardPage() {
       job_type: form.jobType,
       urgency: form.urgency,
       status: "OPEN",
-      ai_summary: form.aiSummary,
+      ai_summary: form.jobDescription,
       eta_description: null,
       location_notes: form.locationNotes || null,
       access_instructions: form.accessInstructions || null,
@@ -284,7 +368,7 @@ export default function DashboardPage() {
             placeholder="Search tickets..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-56"
+            className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-56"
           />
         </div>
 
@@ -295,38 +379,52 @@ export default function DashboardPage() {
         <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={SELECT_CLS}
         >
           <option value="">All Statuses</option>
-          <option value="OPEN">OPEN</option>
-          <option value="ASSIGNED">ASSIGNED</option>
-          <option value="IN_PROGRESS">IN_PROGRESS</option>
-          <option value="COMPLETED">COMPLETED</option>
+          <option value="OPEN">Open</option>
+          <option value="ASSIGNED">Assigned</option>
+          <option value="IN_PROGRESS">In Progress</option>
+          <option value="COMPLETED">Completed</option>
         </select>
 
         <select
           value={filterJobType}
           onChange={e => setFilterJobType(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={SELECT_CLS}
         >
           <option value="">All Job Types</option>
-          <option value="plumbing">plumbing</option>
-          <option value="electrical">electrical</option>
-          <option value="hvac">hvac</option>
-          <option value="carpentry">carpentry</option>
-          <option value="general">general</option>
+          <option value="plumbing">Plumbing</option>
+          <option value="electrical">Electrical</option>
+          <option value="hvac">HVAC</option>
+          <option value="carpentry">Carpentry</option>
+          <option value="general">General</option>
         </select>
 
         <select
           value={filterUrgency}
           onChange={e => setFilterUrgency(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={SELECT_CLS}
         >
           <option value="">All Urgencies</option>
-          <option value="low">low</option>
-          <option value="medium">medium</option>
-          <option value="high">high</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
         </select>
+
+        {/* Clear Filters */}
+        <button
+          onClick={clearAllFilters}
+          disabled={!hasFilters}
+          className={`flex items-center gap-1.5 border rounded-lg px-3 py-2 text-sm transition-colors duration-150 ${
+            hasFilters
+              ? "border-red-300 text-red-600 hover:bg-red-50"
+              : "border-gray-200 text-gray-300 cursor-not-allowed"
+          }`}
+        >
+          <X size={14} />
+          Clear Filters
+        </button>
 
         <div className="flex-1" />
 
@@ -392,7 +490,7 @@ export default function DashboardPage() {
                     >
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono">{ticket.ticket_ref}</span>
+                          <span className="font-mono font-semibold text-gray-900">{ticket.ticket_ref}</span>
                           {overdue && (
                             <span className="flex items-center gap-1 text-red-600 text-xs font-medium">
                               <Clock size={12} /> Overdue
@@ -400,16 +498,16 @@ export default function DashboardPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">{customer?.full_name ?? "—"}</td>
-                      <td className="px-4 py-3 text-sm font-mono text-gray-600">{ticket.property}</td>
-                      <td className="px-4 py-3 text-sm capitalize text-gray-700">{ticket.job_type}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{customer?.full_name ?? "—"}</td>
+                      <td className="px-4 py-3 text-sm font-mono text-gray-700">{ticket.property}</td>
+                      <td className="px-4 py-3 text-sm capitalize text-gray-800">{ticket.job_type}</td>
                       <td className="px-4 py-3"><UrgencyBadge urgency={ticket.urgency} /></td>
                       <td className="px-4 py-3"><StatusBadge status={ticket.status} /></td>
-                      <td className="px-4 py-3 text-sm">
-                        {worker?.full_name ?? <span className="text-gray-400">Unassigned</span>}
+                      <td className="px-4 py-3 text-sm font-medium text-gray-800">
+                        {worker?.full_name ?? <span className="text-gray-400 font-normal">Unassigned</span>}
                       </td>
                       <td className="px-4 py-3"><ViaIcon via={ticket.reported_via} /></td>
-                      <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
+                      <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                         {fmtDate(ticket.created_at)}
                       </td>
                       <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
@@ -450,15 +548,15 @@ export default function DashboardPage() {
           {KANBAN_COLUMNS.map(({ status, label }) => {
             const colTickets = filteredTickets.filter(t => t.status === status)
             const badgeStyle: Record<Status, string> = {
-              OPEN: "bg-gray-100 text-gray-700",
-              ASSIGNED: "bg-blue-100 text-blue-700",
+              OPEN:        "bg-gray-100 text-gray-700",
+              ASSIGNED:    "bg-blue-100 text-blue-700",
               IN_PROGRESS: "bg-amber-100 text-amber-700",
-              COMPLETED: "bg-green-100 text-green-700",
+              COMPLETED:   "bg-green-100 text-green-700",
             }
             return (
               <div key={status} className="bg-gray-100 rounded-xl p-3 min-h-96">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="font-semibold text-sm text-gray-700">{label}</span>
+                  <span className="font-semibold text-sm text-gray-800">{label}</span>
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badgeStyle[status]}`}>
                     {colTickets.length}
                   </span>
@@ -476,24 +574,24 @@ export default function DashboardPage() {
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-mono text-xs text-gray-500">{ticket.ticket_ref}</span>
+                        <span className="font-mono text-xs font-semibold text-gray-700">{ticket.ticket_ref}</span>
                         <UrgencyBadge urgency={ticket.urgency} />
                       </div>
-                      <div className="font-medium text-sm text-gray-900 mb-1">
+                      <div className="font-semibold text-sm text-gray-900 mb-1">
                         {customer?.full_name ?? "—"}
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                      <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
                         <Building2 size={12} />
                         <span>{ticket.property}</span>
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mb-3">
+                      <div className="flex items-center gap-1 text-xs text-gray-600 mb-3">
                         <Wrench size={12} />
                         <span className="capitalize">{ticket.job_type}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <div className="flex items-center gap-1 text-xs font-medium text-gray-700">
                           <HardHat size={12} />
-                          <span>{worker?.full_name ?? <span className="text-gray-400">Unassigned</span>}</span>
+                          <span>{worker?.full_name ?? <span className="text-gray-400 font-normal">Unassigned</span>}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           {overdue && (
@@ -535,16 +633,12 @@ export default function DashboardPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
-                <select
-                  value={form.customerId}
-                  onChange={e => handleCustomerChange(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select customer...</option>
-                  {mockCustomers.map(c => (
-                    <option key={c.id} value={c.id}>{c.full_name}</option>
-                  ))}
-                </select>
+                {/* key forces remount + state reset each time the modal opens */}
+                <CustomerCombobox
+                  key={showAddModal ? "open" : "closed"}
+                  selectedId={form.customerId}
+                  onSelect={(id, prop) => setForm(f => ({ ...f, customerId: id, property: prop }))}
+                />
               </div>
 
               <div>
@@ -553,7 +647,8 @@ export default function DashboardPage() {
                   type="text"
                   value={form.property}
                   onChange={e => setForm(f => ({ ...f, property: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g. Villa-12"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -563,10 +658,10 @@ export default function DashboardPage() {
                   <select
                     value={form.jobType}
                     onChange={e => setForm(f => ({ ...f, jobType: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full ${SELECT_CLS}`}
                   >
                     {["plumbing", "electrical", "hvac", "carpentry", "general"].map(j => (
-                      <option key={j} value={j}>{j}</option>
+                      <option key={j} value={j} className="capitalize">{j}</option>
                     ))}
                   </select>
                 </div>
@@ -575,10 +670,10 @@ export default function DashboardPage() {
                   <select
                     value={form.urgency}
                     onChange={e => setForm(f => ({ ...f, urgency: e.target.value as Urgency }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full ${SELECT_CLS}`}
                   >
                     {(["low", "medium", "high"] as Urgency[]).map(u => (
-                      <option key={u} value={u}>{u}</option>
+                      <option key={u} value={u} className="capitalize">{u}</option>
                     ))}
                   </select>
                 </div>
@@ -589,10 +684,10 @@ export default function DashboardPage() {
                 <select
                   value={form.reportedVia}
                   onChange={e => setForm(f => ({ ...f, reportedVia: e.target.value as Ticket["reported_via"] }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full ${SELECT_CLS}`}
                 >
                   {(["email", "whatsapp", "phone", "manual"] as Ticket["reported_via"][]).map(v => (
-                    <option key={v} value={v}>{v}</option>
+                    <option key={v} value={v} className="capitalize">{v}</option>
                   ))}
                 </select>
               </div>
@@ -603,7 +698,8 @@ export default function DashboardPage() {
                   type="text"
                   value={form.locationNotes}
                   onChange={e => setForm(f => ({ ...f, locationNotes: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g. Kitchen, under the sink on the left side"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -613,17 +709,19 @@ export default function DashboardPage() {
                   type="text"
                   value={form.accessInstructions}
                   onChange={e => setForm(f => ({ ...f, accessInstructions: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g. Key with building security, available after 6pm"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">AI Summary</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Job Description</label>
                 <textarea
                   rows={3}
-                  value={form.aiSummary}
-                  onChange={e => setForm(f => ({ ...f, aiSummary: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  value={form.jobDescription}
+                  onChange={e => setForm(f => ({ ...f, jobDescription: e.target.value }))}
+                  placeholder="Describe the issue in detail..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
               </div>
             </div>
@@ -631,7 +729,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-end gap-3 mt-6">
               <button
                 onClick={() => { setShowAddModal(false); setForm(EMPTY_FORM) }}
-                className="border border-gray-300 rounded-lg px-4 py-2 text-sm hover:bg-gray-50 transition-colors duration-150"
+                className="border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
               >
                 Cancel
               </button>
@@ -659,7 +757,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => setDeleteTargetId(null)}
-                className="border border-gray-300 rounded-lg px-4 py-2 text-sm hover:bg-gray-50 transition-colors duration-150"
+                className="border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
               >
                 Cancel
               </button>

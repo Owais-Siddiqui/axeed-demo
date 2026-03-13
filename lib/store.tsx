@@ -1,8 +1,30 @@
 "use client"
 
-import { createContext, useContext, useState, ReactNode } from "react"
+import { createContext, useContext, useState, Dispatch, SetStateAction, ReactNode } from "react"
 import { Ticket, TicketEvent } from "@/types/index"
 import { mockTickets, mockTicketEvents } from "@/lib/mock-data"
+
+// ─── Dashboard state (persists across navigation) ────────────────────────────
+
+export type DashboardState = {
+  view: "table" | "kanban"
+  search: string
+  filterStatus: string
+  filterJobType: string
+  filterUrgency: string
+  activeCard: string | null
+}
+
+const DEFAULT_DASHBOARD: DashboardState = {
+  view: "table",
+  search: "",
+  filterStatus: "",
+  filterJobType: "",
+  filterUrgency: "",
+  activeCard: null,
+}
+
+// ─── Context ─────────────────────────────────────────────────────────────────
 
 interface TicketContextType {
   tickets: Ticket[]
@@ -11,6 +33,8 @@ interface TicketContextType {
   updateTicket: (id: string, updates: Partial<Ticket>) => void
   deleteTicket: (id: string) => void
   addEvent: (event: TicketEvent) => void
+  dashboardState: DashboardState
+  setDashboardState: Dispatch<SetStateAction<DashboardState>>
 }
 
 const TicketContext = createContext<TicketContextType | null>(null)
@@ -18,6 +42,7 @@ const TicketContext = createContext<TicketContextType | null>(null)
 export function TicketProvider({ children }: { children: ReactNode }) {
   const [tickets, setTickets] = useState<Ticket[]>(mockTickets)
   const [ticketEvents, setTicketEvents] = useState<TicketEvent[]>(mockTicketEvents)
+  const [dashboardState, setDashboardState] = useState<DashboardState>(DEFAULT_DASHBOARD)
 
   function addTicket(ticket: Ticket) {
     setTickets(prev => [ticket, ...prev])
@@ -36,7 +61,9 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <TicketContext.Provider value={{ tickets, ticketEvents, addTicket, updateTicket, deleteTicket, addEvent }}>
+    <TicketContext.Provider
+      value={{ tickets, ticketEvents, addTicket, updateTicket, deleteTicket, addEvent, dashboardState, setDashboardState }}
+    >
       {children}
     </TicketContext.Provider>
   )
