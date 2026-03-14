@@ -52,6 +52,9 @@ export interface Ticket {
   resolution_notes: string | null;
   attachments: Attachment[];
   completion_photos: Attachment[];
+  assigned_at: string | null;
+  in_progress_at: string | null;
+  done_at: string | null;
   created_at: string;
   updated_at: string;
 }

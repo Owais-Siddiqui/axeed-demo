@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useTickets } from "@/lib/store"
-import { mockCustomers, mockWorkers } from "@/lib/mock-data"
 import { Ticket, Urgency, Status, Customer } from "@/types/index"
 import {
   LayoutList,
@@ -97,15 +96,17 @@ function fmtDate(iso: string): string {
 function CustomerCombobox({
   selectedId,
   onSelect,
+  customers,
 }: {
   selectedId: string
   onSelect: (id: string, propertyRef: string) => void
+  customers: Customer[]
 }) {
-  const selected = mockCustomers.find(c => c.id === selectedId)
+  const selected = customers.find(c => c.id === selectedId)
   const [inputText, setInputText] = useState(selected?.full_name ?? "")
   const [open, setOpen] = useState(false)
 
-  const matches = mockCustomers.filter(c =>
+  const matches = customers.filter(c =>
     !inputText || c.full_name.toLowerCase().includes(inputText.toLowerCase())
   )
 
@@ -195,7 +196,7 @@ const SELECT_CLS =
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { tickets, addTicket, deleteTicket, addEvent, dashboardState, setDashboardState } = useTickets()
+  const { customers, workers, tickets, addTicket, deleteTicket, addEvent, dashboardState, setDashboardState } = useTickets()
 
   // Destructure persistent state from context
   const { view, search, filterStatus, filterJobType, filterUrgency, activeCard } = dashboardState
@@ -249,7 +250,7 @@ export default function DashboardPage() {
       if (filterJobType  && ticket.job_type  !== filterJobType)  return false
       if (filterUrgency  && ticket.urgency   !== filterUrgency)  return false
       if (search) {
-        const customer = mockCustomers.find(c => c.id === ticket.customer_id)
+        const customer = customers.find(c => c.id === ticket.customer_id)
         const q = search.toLowerCase()
         const hit =
           ticket.ticket_ref.toLowerCase().includes(q) ||
@@ -284,7 +285,7 @@ export default function DashboardPage() {
     }))
   }
 
-  function handleAddTicket() {
+  async function handleAddTicket() {
     const maxNum = tickets.reduce((max, t) => {
       const n = parseInt(t.ticket_ref.replace("TKT-", "") || "0")
       return n > max ? n : max
@@ -308,11 +309,14 @@ export default function DashboardPage() {
       resolution_notes: null,
       attachments: [],
       completion_photos: [],
+      assigned_at: null,
+      in_progress_at: null,
+      done_at: null,
       created_at: now,
       updated_at: now,
     }
-    addTicket(newTicket)
-    addEvent({
+    await addTicket(newTicket)
+    await addEvent({
       id: crypto.randomUUID(),
       ticket_id: newTicket.id,
       event_type: "CREATED",
@@ -477,8 +481,8 @@ export default function DashboardPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredTickets.map(ticket => {
-                  const customer = mockCustomers.find(c => c.id === ticket.customer_id)
-                  const worker = mockWorkers.find(w => w.id === ticket.worker_id)
+                  const customer = customers.find(c => c.id === ticket.customer_id)
+                  const worker = workers.find(w => w.id === ticket.worker_id)
                   const overdue = isOverdue(ticket)
                   return (
                     <tr
@@ -562,8 +566,8 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 {colTickets.map(ticket => {
-                  const customer = mockCustomers.find(c => c.id === ticket.customer_id)
-                  const worker = mockWorkers.find(w => w.id === ticket.worker_id)
+                  const customer = customers.find(c => c.id === ticket.customer_id)
+                  const worker = workers.find(w => w.id === ticket.worker_id)
                   const overdue = isOverdue(ticket)
                   return (
                     <div
@@ -638,6 +642,7 @@ export default function DashboardPage() {
                   key={showAddModal ? "open" : "closed"}
                   selectedId={form.customerId}
                   onSelect={(id, prop) => setForm(f => ({ ...f, customerId: id, property: prop }))}
+                  customers={customers}
                 />
               </div>
 

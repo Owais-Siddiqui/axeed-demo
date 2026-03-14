@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
-import { TicketProvider } from "@/lib/store"
+import { TicketProvider, LoadingGate } from "@/lib/store"
 import { LayoutDashboard } from "lucide-react"
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] })
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <span className="text-sm text-gray-500">{currentDate}</span>
           </nav>
           <main className="bg-gray-50 min-h-screen">
-            {children}
+            <LoadingGate>{children}</LoadingGate>
           </main>
         </TicketProvider>
       </body>

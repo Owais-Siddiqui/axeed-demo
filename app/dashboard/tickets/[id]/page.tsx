@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useTickets } from "@/lib/store"
-import { mockCustomers, mockWorkers } from "@/lib/mock-data"
 import { Ticket, Urgency, Status, TicketEvent } from "@/types/index"
 import {
   ArrowLeft,
@@ -147,11 +146,11 @@ type EditForm = {
 export default function TicketDetailPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
-  const { tickets, ticketEvents, updateTicket, deleteTicket, addEvent } = useTickets()
+  const { customers, workers, tickets, ticketEvents, updateTicket, deleteTicket, addEvent } = useTickets()
 
   const ticket = tickets.find(t => t.id === params.id)
-  const customer = ticket ? mockCustomers.find(c => c.id === ticket.customer_id) : null
-  const worker = ticket ? mockWorkers.find(w => w.id === ticket.worker_id) : null
+  const customer = ticket ? customers.find(c => c.id === ticket.customer_id) : null
+  const worker = ticket ? workers.find(w => w.id === ticket.worker_id) : null
   const events = ticket
     ? ticketEvents.filter(e => e.ticket_id === ticket.id).sort(
         (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -213,9 +212,9 @@ export default function TicketDetailPage() {
     setShowEditModal(true)
   }
 
-  function handleEditSave() {
+  async function handleEditSave() {
     const now = new Date().toISOString()
-    updateTicket(ticket!.id, {
+    await updateTicket(ticket!.id, {
       customer_id: editForm.customerId,
       property: editForm.property,
       job_type: editForm.jobType,
@@ -231,17 +230,28 @@ export default function TicketDetailPage() {
     setShowEditModal(false)
   }
 
-  function handleStatusSave() {
+  async function handleStatusSave() {
     const now = new Date().toISOString()
     const prevStatus = ticket!.status
     const prevWorker = ticket!.worker_id ?? ""
-    updateTicket(ticket!.id, {
+
+    // Build timestamp fields for the new status
+    const timestampUpdates: Partial<Ticket> = {}
+    if (selectedStatus !== prevStatus) {
+      if (selectedStatus === "ASSIGNED")    timestampUpdates.assigned_at    = now
+      if (selectedStatus === "IN_PROGRESS") timestampUpdates.in_progress_at = now
+      if (selectedStatus === "COMPLETED")   timestampUpdates.done_at        = now
+    }
+
+    await updateTicket(ticket!.id, {
       status: selectedStatus,
       worker_id: selectedWorkerId || null,
       updated_at: now,
+      ...timestampUpdates,
     })
+
     if (selectedStatus !== prevStatus) {
-      addEvent({
+      await addEvent({
         id: crypto.randomUUID(),
         ticket_id: ticket!.id,
         event_type: selectedStatus === "COMPLETED" ? "COMPLETED" : "STATUS_CHANGE",
@@ -251,22 +261,22 @@ export default function TicketDetailPage() {
       })
     }
     if (selectedWorkerId !== prevWorker) {
-      addEvent({
+      await addEvent({
         id: crypto.randomUUID(),
         ticket_id: ticket!.id,
         event_type: "ASSIGNED",
         actor: "Manager",
         note: selectedWorkerId
-          ? `Assigned to ${mockWorkers.find(w => w.id === selectedWorkerId)?.full_name ?? "worker"}.`
+          ? `Assigned to ${workers.find(w => w.id === selectedWorkerId)?.full_name ?? "worker"}.`
           : "Worker unassigned.",
         created_at: now,
       })
     }
   }
 
-  function handleAddNote() {
+  async function handleAddNote() {
     if (!noteText.trim()) return
-    addEvent({
+    await addEvent({
       id: crypto.randomUUID(),
       ticket_id: ticket!.id,
       event_type: "NOTE",
@@ -277,8 +287,8 @@ export default function TicketDetailPage() {
     setNoteText("")
   }
 
-  function handleDeleteConfirm() {
-    deleteTicket(ticket!.id)
+  async function handleDeleteConfirm() {
+    await deleteTicket(ticket!.id)
     router.push("/dashboard")
   }
 
@@ -464,7 +474,7 @@ export default function TicketDetailPage() {
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Unassigned</option>
-            {mockWorkers.map(w => (
+            {workers.map(w => (
               <option key={w.id} value={w.id}>{w.full_name}</option>
             ))}
           </select>
@@ -601,12 +611,12 @@ export default function TicketDetailPage() {
                 <select
                   value={editForm.customerId}
                   onChange={e => {
-                    const c = mockCustomers.find(c => c.id === e.target.value)
+                    const c = customers.find(c => c.id === e.target.value)
                     setEditForm(f => ({ ...f, customerId: e.target.value, property: c?.property_ref ?? f.property }))
                   }}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {mockCustomers.map(c => (
+                  {customers.map(c => (
                     <option key={c.id} value={c.id}>{c.full_name}</option>
                   ))}
                 </select>
