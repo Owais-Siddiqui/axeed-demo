@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseServer } from "@/lib/supabase-server"
 
-export async function GET() {
-  const { data, error } = await supabaseServer.from("workers").select("*").order("full_name")
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
+  const skill = searchParams.get("skill")
+
+  let query = supabaseServer.from("workers").select("*").order("full_name")
+  if (skill) query = query.contains("skills", [skill])
+
+  const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ data })

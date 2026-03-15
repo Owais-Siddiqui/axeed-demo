@@ -99,38 +99,37 @@ function CustomerCombobox({
   customers,
 }: {
   selectedEmail: string
-  onSelect: (email: string, propertyRef: string) => void
+  onSelect: (email: string, propertyRef: string, fullName: string) => void
   customers: Customer[]
 }) {
-  const selected = customers.find(c => c.email === selectedEmail)
-  const [inputText, setInputText] = useState(selected?.full_name ?? "")
+  const [inputText, setInputText] = useState(selectedEmail)
   const [open, setOpen] = useState(false)
 
   const matches = customers.filter(c =>
-    !inputText || c.full_name.toLowerCase().includes(inputText.toLowerCase())
+    !inputText || c.email.toLowerCase().includes(inputText.toLowerCase())
   )
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setInputText(e.target.value)
     setOpen(true)
-    if (selectedEmail) onSelect("", "") // clear selection while user types
+    if (selectedEmail) onSelect("", "", "") // clear selection while user types
   }
 
   function handleSelect(c: Customer) {
-    setInputText(c.full_name)
+    setInputText(c.email)
     setOpen(false)
-    onSelect(c.email, c.property_ref)
+    onSelect(c.email, c.property_ref, c.full_name)
   }
 
   return (
     <div className="relative">
       <input
-        type="text"
+        type="email"
         value={inputText}
         onChange={handleChange}
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
-        placeholder="Type to search customers..."
+        placeholder="Type customer email to search..."
         className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         autoComplete="off"
       />
@@ -142,11 +141,12 @@ function CustomerCombobox({
                 key={c.id}
                 type="button"
                 onMouseDown={e => { e.preventDefault(); handleSelect(c) }}
-                className={`w-full text-left px-3 py-2 text-sm text-gray-900 hover:bg-blue-50 transition-colors duration-100 ${
+                className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors duration-100 ${
                   selectedEmail === c.email ? "bg-blue-50 font-medium" : ""
                 }`}
               >
-                {c.full_name}
+                <div className="text-gray-900">{c.email}</div>
+                <div className="text-gray-400 text-xs">{c.full_name}</div>
               </button>
             ))
           ) : (
@@ -162,6 +162,7 @@ function CustomerCombobox({
 
 type FormState = {
   customerEmail: string
+  customerName: string
   property: string
   jobType: string
   urgency: Urgency
@@ -173,6 +174,7 @@ type FormState = {
 
 const EMPTY_FORM: FormState = {
   customerEmail: "",
+  customerName: "",
   property: "",
   jobType: "plumbing",
   urgency: "low",
@@ -638,15 +640,27 @@ export default function DashboardPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Customer Email</label>
                 {/* key forces remount + state reset each time the modal opens */}
                 <CustomerCombobox
                   key={showAddModal ? "open" : "closed"}
                   selectedEmail={form.customerEmail}
-                  onSelect={(email, prop) => setForm(f => ({ ...f, customerEmail: email, property: prop }))}
+                  onSelect={(email, prop, name) => setForm(f => ({ ...f, customerEmail: email, property: prop, customerName: name }))}
                   customers={customers}
                 />
               </div>
+
+              {form.customerName && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                  <input
+                    type="text"
+                    value={form.customerName}
+                    readOnly
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-gray-50 cursor-not-allowed"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Property</label>

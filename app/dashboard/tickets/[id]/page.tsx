@@ -316,7 +316,7 @@ export default function TicketDetailPage() {
         <div className="flex-1" />
         <button
           onClick={handleOpenEdit}
-          className="flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50 transition-colors duration-150"
+          className="flex items-center gap-2 border border-blue-400 bg-blue-50 text-blue-800 rounded-lg px-3 py-1.5 text-sm hover:bg-blue-100 transition-colors duration-150"
         >
           <Pencil size={16} />
           Edit
@@ -352,8 +352,8 @@ export default function TicketDetailPage() {
           <FieldRow icon={<HardHat size={16} />} label="Assigned Worker">
             {worker?.full_name ?? <span className="text-gray-400">Unassigned</span>}
           </FieldRow>
-          <FieldRow icon={<CalendarClock size={16} />} label="ETA">
-            {ticket.eta_description ?? <span className="text-gray-400">—</span>}
+          <FieldRow icon={<CalendarClock size={16} />} label="Created At">
+            {new Date(ticket.created_at).toLocaleString()}
           </FieldRow>
           <FieldRow icon={<span className="flex items-center">{VIA_ICONS[ticket.reported_via]}</span>} label="Reported Via">
             <span className="flex items-center gap-1">
