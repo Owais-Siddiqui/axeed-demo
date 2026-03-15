@@ -73,7 +73,7 @@ export default function WorkersPage() {
         })
       } else {
         const newWorker: Worker = {
-          id: crypto.randomUUID(),
+          id: "",
           full_name: form.full_name,
           phone: form.phone,
           skills: skillsArray,

@@ -19,15 +19,58 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  let body: unknown
+  let body: Record<string, unknown>
   try {
     body = await req.json()
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
   }
 
-  const { error } = await supabaseServer.from("tickets").insert(body)
+  const { data: existing } = await supabaseServer
+    .from("tickets")
+    .select("ticket_ref")
+    .order("ticket_ref", { ascending: false })
+    .limit(1)
+    .single()
+
+  const maxNum = existing
+    ? parseInt((existing.ticket_ref as string).replace("TKT-", "") || "0")
+    : 0
+  const ticket_ref = `TKT-${String(maxNum + 1).padStart(4, "0")}`
+
+  const { data: customer, error: customerError } = await supabaseServer
+    .from("customers")
+    .select("building_name")
+    .eq("email", body.customer_email)
+    .single()
+  if (customerError || !customer)
+    return NextResponse.json({ error: "Customer not found" }, { status: 404 })
+
+  const property = customer.building_name
+
+  const { id: _id, ticket_ref: _ref, property: _property, completion_photos: _cp, ...rest } = body
+  const now = new Date().toISOString()
+  const { data, error } = await supabaseServer
+    .from("tickets")
+    .insert({
+      ...rest,
+      ticket_ref,
+      property,
+      completion_photos: [],
+      created_at: now,
+      updated_at: now,
+    })
+    .select()
+    .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ ok: true }, { status: 201 })
+  await supabaseServer.from("ticket_events").insert({
+    ticket_id: data.id,
+    event_type: "CREATED",
+    actor: "System",
+    note: `Ticket created via API. Job type: ${data.job_type}, Urgency: ${data.urgency}.`,
+    created_at: now,
+  })
+
+  return NextResponse.json({ data }, { status: 201 })
 }

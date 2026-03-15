@@ -252,7 +252,7 @@ export default function TicketDetailPage() {
 
     if (selectedStatus !== prevStatus) {
       await addEvent({
-        id: crypto.randomUUID(),
+        id: "",
         ticket_id: ticket!.id,
         event_type: selectedStatus === "COMPLETED" ? "COMPLETED" : "STATUS_CHANGE",
         actor: "Manager",
@@ -262,7 +262,7 @@ export default function TicketDetailPage() {
     }
     if (selectedWorkerId !== prevWorker) {
       await addEvent({
-        id: crypto.randomUUID(),
+        id: "",
         ticket_id: ticket!.id,
         event_type: "ASSIGNED",
         actor: "Manager",
@@ -277,7 +277,7 @@ export default function TicketDetailPage() {
   async function handleAddNote() {
     if (!noteText.trim()) return
     await addEvent({
-      id: crypto.randomUUID(),
+      id: "",
       ticket_id: ticket!.id,
       event_type: "NOTE",
       actor: "Manager",

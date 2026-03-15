@@ -6,7 +6,7 @@
 -- ─── Tables ───────────────────────────────────────────────────────────────────
 
 CREATE TABLE customers (
-  id               TEXT PRIMARY KEY,
+  id               TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   full_name        TEXT NOT NULL,
   email            TEXT NOT NULL UNIQUE,
   phone            TEXT NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE customers (
 );
 
 CREATE TABLE workers (
-  id           TEXT PRIMARY KEY,
+  id           TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   full_name    TEXT NOT NULL,
   skills       TEXT[] NOT NULL DEFAULT '{}',
   phone        TEXT NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE workers (
 );
 
 CREATE TABLE tickets (
-  id                   TEXT PRIMARY KEY,
+  id                   TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   ticket_ref           TEXT NOT NULL UNIQUE,
   customer_email       TEXT NOT NULL REFERENCES customers(email),
   worker_id            TEXT REFERENCES workers(id),
@@ -55,7 +55,7 @@ CREATE TABLE tickets (
 );
 
 CREATE TABLE ticket_events (
-  id         TEXT PRIMARY KEY,
+  id         TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   ticket_id  TEXT NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
   event_type TEXT NOT NULL,
   actor      TEXT NOT NULL,

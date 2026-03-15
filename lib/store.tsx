@@ -40,7 +40,7 @@ interface TicketContextType {
   ticketEvents: TicketEvent[]
   isLoading: boolean
   error: string | null
-  addTicket: (ticket: Ticket) => Promise<void>
+  addTicket: (ticket: Ticket) => Promise<Ticket | null>
   updateTicket: (id: string, updates: Partial<Ticket>) => Promise<void>
   deleteTicket: (id: string) => Promise<void>
   addEvent: (event: TicketEvent) => Promise<void>
@@ -90,13 +90,18 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     loadAll()
   }, [])
 
-  async function addTicket(ticket: Ticket) {
+  async function addTicket(ticket: Ticket): Promise<Ticket | null> {
     const res = await fetch("/api/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(ticket),
     })
-    if (res.ok) setTickets(prev => [ticket, ...prev])
+    if (res.ok) {
+      const { data } = await res.json()
+      setTickets(prev => [data as Ticket, ...prev])
+      return data as Ticket
+    }
+    return null
   }
 
   async function updateTicket(id: string, updates: Partial<Ticket>) {
@@ -121,7 +126,10 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(event),
     })
-    if (res.ok) setTicketEvents(prev => [...prev, event])
+    if (res.ok) {
+      const { data } = await res.json()
+      setTicketEvents(prev => [...prev, data as TicketEvent])
+    }
   }
 
   async function addCustomer(customer: Customer) {
@@ -130,7 +138,10 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(customer),
     })
-    if (res.ok) setCustomers(prev => [...prev, customer].sort((a, b) => a.full_name.localeCompare(b.full_name)))
+    if (res.ok) {
+      const { data } = await res.json()
+      setCustomers(prev => [...prev, data as Customer].sort((a, b) => a.full_name.localeCompare(b.full_name)))
+    }
   }
 
   async function updateCustomer(id: string, updates: Partial<Customer>) {
@@ -153,7 +164,10 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(worker),
     })
-    if (res.ok) setWorkers(prev => [...prev, worker].sort((a, b) => a.full_name.localeCompare(b.full_name)))
+    if (res.ok) {
+      const { data } = await res.json()
+      setWorkers(prev => [...prev, data as Worker].sort((a, b) => a.full_name.localeCompare(b.full_name)))
+    }
   }
 
   async function updateWorker(id: string, updates: Partial<Worker>) {

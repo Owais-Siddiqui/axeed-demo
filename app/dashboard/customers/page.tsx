@@ -100,7 +100,7 @@ export default function CustomersPage() {
         })
       } else {
         const newCustomer: Customer = {
-          id: crypto.randomUUID(),
+          id: "",
           ...form,
           floor: form.floor || null,
           emergency_contact: form.emergency_contact || null,

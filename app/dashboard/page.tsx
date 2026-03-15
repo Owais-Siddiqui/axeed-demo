@@ -293,7 +293,7 @@ export default function DashboardPage() {
     const ticketRef = `TKT-${String(maxNum + 1).padStart(4, "0")}`
     const now = new Date().toISOString()
     const newTicket: Ticket = {
-      id: crypto.randomUUID(),
+      id: "",
       ticket_ref: ticketRef,
       customer_email: form.customerEmail,
       worker_id: null,
@@ -315,15 +315,17 @@ export default function DashboardPage() {
       created_at: now,
       updated_at: now,
     }
-    await addTicket(newTicket)
-    await addEvent({
-      id: crypto.randomUUID(),
-      ticket_id: newTicket.id,
-      event_type: "CREATED",
-      actor: "Manager",
-      note: `Ticket created manually. Job type: ${form.jobType}, Urgency: ${form.urgency}.`,
-      created_at: now,
-    })
+    const created = await addTicket(newTicket)
+    if (created) {
+      await addEvent({
+        id: "",
+        ticket_id: created.id,
+        event_type: "CREATED",
+        actor: "Manager",
+        note: `Ticket created manually. Job type: ${form.jobType}, Urgency: ${form.urgency}.`,
+        created_at: now,
+      })
+    }
     setShowAddModal(false)
     setForm(EMPTY_FORM)
   }

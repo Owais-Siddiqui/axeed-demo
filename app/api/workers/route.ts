@@ -9,15 +9,16 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  let body: unknown
+  let body: Record<string, unknown>
   try {
     body = await req.json()
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
   }
 
-  const { error } = await supabaseServer.from("workers").insert(body)
+  const { id: _id, ...insertData } = body
+  const { data, error } = await supabaseServer.from("workers").insert(insertData).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ ok: true }, { status: 201 })
+  return NextResponse.json({ data }, { status: 201 })
 }
