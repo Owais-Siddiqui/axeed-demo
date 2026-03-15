@@ -31,10 +31,13 @@ import {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function isOverdue(ticket: Ticket): boolean {
-  if (ticket.urgency !== "high") return false
-  if (!["OPEN", "ASSIGNED"].includes(ticket.status)) return false
-  const hoursDiff = (Date.now() - new Date(ticket.created_at).getTime()) / 3_600_000
-  return hoursDiff > 24
+  if (ticket.status === "COMPLETED") return false
+  const statusStart =
+    ticket.status === "IN_PROGRESS" ? ticket.in_progress_at :
+    ticket.status === "ASSIGNED"    ? ticket.assigned_at :
+    ticket.created_at  // OPEN
+  if (!statusStart) return false
+  return (Date.now() - new Date(statusStart).getTime()) / 3_600_000 > 24
 }
 
 function StatusBadge({ status }: { status: Status }) {
@@ -662,16 +665,17 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Property</label>
-                <input
-                  type="text"
-                  value={form.property}
-                  onChange={e => setForm(f => ({ ...f, property: e.target.value }))}
-                  placeholder="e.g. Villa-12"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              {form.property && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Property</label>
+                  <input
+                    type="text"
+                    value={form.property}
+                    readOnly
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-gray-50 cursor-not-allowed"
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>

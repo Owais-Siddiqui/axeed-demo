@@ -10,6 +10,7 @@ import {
   ReactNode,
 } from "react"
 import { Ticket, TicketEvent, Customer, Worker } from "@/types/index"
+import { supabaseClient } from "@/lib/supabase-client"
 
 // ─── Dashboard state (persists across navigation) ────────────────────────────
 
@@ -88,6 +89,34 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       }
     }
     loadAll()
+  }, [])
+
+  useEffect(() => {
+    const channel = supabaseClient
+      .channel("realtime-all")
+      .on("postgres_changes", { event: "*", schema: "public", table: "tickets" }, ({ eventType, new: row, old }) => {
+        if (eventType === "INSERT") setTickets(prev => prev.some(t => t.id === (row as Ticket).id) ? prev : [row as Ticket, ...prev])
+        if (eventType === "UPDATE") setTickets(prev => prev.map(t => t.id === (row as Ticket).id ? row as Ticket : t))
+        if (eventType === "DELETE") setTickets(prev => prev.filter(t => t.id !== (old as { id: string }).id))
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "ticket_events" }, ({ eventType, new: row, old }) => {
+        if (eventType === "INSERT") setTicketEvents(prev => prev.some(e => e.id === (row as TicketEvent).id) ? prev : [...prev, row as TicketEvent])
+        if (eventType === "UPDATE") setTicketEvents(prev => prev.map(e => e.id === (row as TicketEvent).id ? row as TicketEvent : e))
+        if (eventType === "DELETE") setTicketEvents(prev => prev.filter(e => e.id !== (old as { id: string }).id))
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "customers" }, ({ eventType, new: row, old }) => {
+        if (eventType === "INSERT") setCustomers(prev => prev.some(c => c.id === (row as Customer).id) ? prev : [...prev, row as Customer].sort((a, b) => a.full_name.localeCompare(b.full_name)))
+        if (eventType === "UPDATE") setCustomers(prev => prev.map(c => c.id === (row as Customer).id ? row as Customer : c))
+        if (eventType === "DELETE") setCustomers(prev => prev.filter(c => c.id !== (old as { id: string }).id))
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "workers" }, ({ eventType, new: row, old }) => {
+        if (eventType === "INSERT") setWorkers(prev => prev.some(w => w.id === (row as Worker).id) ? prev : [...prev, row as Worker].sort((a, b) => a.full_name.localeCompare(b.full_name)))
+        if (eventType === "UPDATE") setWorkers(prev => prev.map(w => w.id === (row as Worker).id ? row as Worker : w))
+        if (eventType === "DELETE") setWorkers(prev => prev.filter(w => w.id !== (old as { id: string }).id))
+      })
+      .subscribe()
+
+    return () => { supabaseClient.removeChannel(channel) }
   }, [])
 
   async function addTicket(ticket: Ticket): Promise<Ticket | null> {
