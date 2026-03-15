@@ -137,7 +137,6 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     })
     if (res.ok) {
       const { data } = await res.json()
-      setTickets(prev => prev.some(t => t.id === (data as Ticket).id) ? prev : [data as Ticket, ...prev])
       return data as Ticket
     }
     return null
