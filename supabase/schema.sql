@@ -8,7 +8,7 @@
 CREATE TABLE customers (
   id               TEXT PRIMARY KEY,
   full_name        TEXT NOT NULL,
-  email            TEXT NOT NULL,
+  email            TEXT NOT NULL UNIQUE,
   phone            TEXT NOT NULL,
   property_ref     TEXT NOT NULL,
   building_name    TEXT NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE workers (
 CREATE TABLE tickets (
   id                   TEXT PRIMARY KEY,
   ticket_ref           TEXT NOT NULL UNIQUE,
-  customer_id          TEXT NOT NULL REFERENCES customers(id),
+  customer_email       TEXT NOT NULL REFERENCES customers(email),
   worker_id            TEXT REFERENCES workers(id),
   property             TEXT NOT NULL,
   job_type             TEXT NOT NULL,
@@ -100,13 +100,13 @@ INSERT INTO workers VALUES
 -- ─── Seed: Tickets ───────────────────────────────────────────────────────────
 
 INSERT INTO tickets
-  (id, ticket_ref, customer_id, worker_id, property, job_type, urgency, status,
+  (id, ticket_ref, customer_email, worker_id, property, job_type, urgency, status,
    ai_summary, eta_description, location_notes, access_instructions, reported_via,
    resolution_notes, attachments, completion_photos,
    assigned_at, in_progress_at, done_at, created_at, updated_at)
 VALUES
 (
-  't1','TKT-0001','c1',NULL,'Villa-12','plumbing','high','OPEN',
+  't1','TKT-0001','ahmed.mansoori@email.com',NULL,'Villa-12','plumbing','high','OPEN',
   'Burst pipe under kitchen sink causing active water leakage onto floor. Tenant reports water spreading to adjacent cabinet.',
   NULL,
   'Kitchen, under the sink cabinet on the left side',
@@ -118,7 +118,7 @@ VALUES
   '2026-03-11T08:00:00Z','2026-03-11T08:00:00Z'
 ),
 (
-  't2','TKT-0002','c2','w2','Apt-B7','electrical','medium','ASSIGNED',
+  't2','TKT-0002','sara.ibrahim@email.com','w2','Apt-B7','electrical','medium','ASSIGNED',
   'Power outage in bedroom and living room. Circuit breaker trips every time lights are switched on in those rooms.',
   'Within 24 hours',
   'Fuse box is in the utility closet near the entrance',
@@ -130,7 +130,7 @@ VALUES
   '2026-03-13T07:30:00Z','2026-03-13T09:00:00Z'
 ),
 (
-  't3','TKT-0003','c3','w2','Villa-34','hvac','low','IN_PROGRESS',
+  't3','TKT-0003','omar.farooq@email.com','w2','Villa-34','hvac','low','IN_PROGRESS',
   'AC unit in master bedroom not cooling effectively. Room temperature stays above 28°C even on full blast. Filter likely blocked.',
   'Today afternoon',
   'Master bedroom, wall-mounted unit above wardrobe',
@@ -142,7 +142,7 @@ VALUES
   '2026-03-12T10:00:00Z','2026-03-13T08:00:00Z'
 ),
 (
-  't4','TKT-0004','c4','w3','Apt-C3','carpentry','low','COMPLETED',
+  't4','TKT-0004','fatima.noor@email.com','w3','Apt-C3','carpentry','low','COMPLETED',
   'Broken cabinet door hinge in master bedroom wardrobe. Door hanging loose and cannot be closed properly.',
   'Next business day',
   'Master bedroom, rightmost wardrobe door',
@@ -155,7 +155,7 @@ VALUES
   '2026-03-11T09:00:00Z','2026-03-12T14:00:00Z'
 ),
 (
-  't5','TKT-0005','c5','w1','Villa-08','plumbing','high','ASSIGNED',
+  't5','TKT-0005','rania.hassan@email.com','w1','Villa-08','plumbing','high','ASSIGNED',
   'Main bathroom drain completely blocked. Water backing up into shower and flooding bathroom floor.',
   'Within 4 hours',
   'Main bathroom, floor drain next to shower',
@@ -167,7 +167,7 @@ VALUES
   '2026-03-13T08:45:00Z','2026-03-13T09:30:00Z'
 ),
 (
-  't6','TKT-0006','c6',NULL,'Apt-D11','general','medium','OPEN',
+  't6','TKT-0006','yousef.zaabi@email.com',NULL,'Apt-D11','general','medium','OPEN',
   'Front door lock jammed. Tenant unable to lock from outside. Security risk as unit on 11th floor facing main corridor.',
   NULL,
   'Main entrance door, deadbolt mechanism',
@@ -179,7 +179,7 @@ VALUES
   '2026-03-13T09:15:00Z','2026-03-13T09:15:00Z'
 ),
 (
-  't7','TKT-0007','c7','w2','Villa-21','electrical','high','IN_PROGRESS',
+  't7','TKT-0007','layla.mahmoud@email.com','w2','Villa-21','electrical','high','IN_PROGRESS',
   'Exposed wiring found in utility room behind washing machine. Wires frayed and touching wall. Potential fire hazard.',
   'Within 2 hours',
   'Utility room, behind the washing machine on the right wall',
@@ -191,7 +191,7 @@ VALUES
   '2026-03-11T07:00:00Z','2026-03-13T08:00:00Z'
 ),
 (
-  't8','TKT-0008','c8','w2','Apt-A2','hvac','medium','COMPLETED',
+  't8','TKT-0008','bilal.qureshi@email.com','w2','Apt-A2','hvac','medium','COMPLETED',
   'Heating unit making loud rattling noise during operation. Noise starts 10 minutes after turning on and persists.',
   'Within 24 hours',
   'Living room ceiling unit',
@@ -204,7 +204,7 @@ VALUES
   '2026-03-10T11:00:00Z','2026-03-11T13:00:00Z'
 ),
 (
-  't9','TKT-0009','c9',NULL,'Villa-55','carpentry','low','OPEN',
+  't9','TKT-0009','mariam.ketbi@email.com',NULL,'Villa-55','carpentry','low','OPEN',
   'Wardrobe sliding door has come off its track in second bedroom. Door cannot be moved and is blocking access to wardrobe.',
   NULL,
   'Second bedroom, built-in wardrobe sliding door',
@@ -216,7 +216,7 @@ VALUES
   '2026-03-12T14:00:00Z','2026-03-12T14:00:00Z'
 ),
 (
-  't10','TKT-0010','c10','w1','Apt-F6','plumbing','medium','ASSIGNED',
+  't10','TKT-0010','tariq.binzayed@email.com','w1','Apt-F6','plumbing','medium','ASSIGNED',
   'Water heater not producing consistent hot water. Water runs warm for 2 minutes then turns cold. Issue recurring since last month.',
   'Tomorrow morning',
   'Utility cupboard next to bathroom, white tank unit',

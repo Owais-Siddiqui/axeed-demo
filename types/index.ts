@@ -38,7 +38,7 @@ export interface Worker {
 export interface Ticket {
   id: string;
   ticket_ref: string;
-  customer_id: string;
+  customer_email: string;
   worker_id: string | null;
   property: string;
   job_type: string;

@@ -94,15 +94,15 @@ function fmtDate(iso: string): string {
 // ─── Searchable Customer Combobox ─────────────────────────────────────────────
 
 function CustomerCombobox({
-  selectedId,
+  selectedEmail,
   onSelect,
   customers,
 }: {
-  selectedId: string
-  onSelect: (id: string, propertyRef: string) => void
+  selectedEmail: string
+  onSelect: (email: string, propertyRef: string) => void
   customers: Customer[]
 }) {
-  const selected = customers.find(c => c.id === selectedId)
+  const selected = customers.find(c => c.email === selectedEmail)
   const [inputText, setInputText] = useState(selected?.full_name ?? "")
   const [open, setOpen] = useState(false)
 
@@ -113,13 +113,13 @@ function CustomerCombobox({
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setInputText(e.target.value)
     setOpen(true)
-    if (selectedId) onSelect("", "") // clear selection while user types
+    if (selectedEmail) onSelect("", "") // clear selection while user types
   }
 
   function handleSelect(c: Customer) {
     setInputText(c.full_name)
     setOpen(false)
-    onSelect(c.id, c.property_ref)
+    onSelect(c.email, c.property_ref)
   }
 
   return (
@@ -143,7 +143,7 @@ function CustomerCombobox({
                 type="button"
                 onMouseDown={e => { e.preventDefault(); handleSelect(c) }}
                 className={`w-full text-left px-3 py-2 text-sm text-gray-900 hover:bg-blue-50 transition-colors duration-100 ${
-                  selectedId === c.id ? "bg-blue-50 font-medium" : ""
+                  selectedEmail === c.email ? "bg-blue-50 font-medium" : ""
                 }`}
               >
                 {c.full_name}
@@ -161,7 +161,7 @@ function CustomerCombobox({
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type FormState = {
-  customerId: string
+  customerEmail: string
   property: string
   jobType: string
   urgency: Urgency
@@ -172,7 +172,7 @@ type FormState = {
 }
 
 const EMPTY_FORM: FormState = {
-  customerId: "",
+  customerEmail: "",
   property: "",
   jobType: "plumbing",
   urgency: "low",
@@ -250,7 +250,7 @@ export default function DashboardPage() {
       if (filterJobType  && ticket.job_type  !== filterJobType)  return false
       if (filterUrgency  && ticket.urgency   !== filterUrgency)  return false
       if (search) {
-        const customer = customers.find(c => c.id === ticket.customer_id)
+        const customer = customers.find(c => c.email === ticket.customer_email)
         const q = search.toLowerCase()
         const hit =
           ticket.ticket_ref.toLowerCase().includes(q) ||
@@ -295,7 +295,7 @@ export default function DashboardPage() {
     const newTicket: Ticket = {
       id: crypto.randomUUID(),
       ticket_ref: ticketRef,
-      customer_id: form.customerId,
+      customer_email: form.customerEmail,
       worker_id: null,
       property: form.property,
       job_type: form.jobType,
@@ -481,7 +481,7 @@ export default function DashboardPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredTickets.map(ticket => {
-                  const customer = customers.find(c => c.id === ticket.customer_id)
+                  const customer = customers.find(c => c.email === ticket.customer_email)
                   const worker = workers.find(w => w.id === ticket.worker_id)
                   const overdue = isOverdue(ticket)
                   return (
@@ -566,7 +566,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 {colTickets.map(ticket => {
-                  const customer = customers.find(c => c.id === ticket.customer_id)
+                  const customer = customers.find(c => c.email === ticket.customer_email)
                   const worker = workers.find(w => w.id === ticket.worker_id)
                   const overdue = isOverdue(ticket)
                   return (
@@ -640,8 +640,8 @@ export default function DashboardPage() {
                 {/* key forces remount + state reset each time the modal opens */}
                 <CustomerCombobox
                   key={showAddModal ? "open" : "closed"}
-                  selectedId={form.customerId}
-                  onSelect={(id, prop) => setForm(f => ({ ...f, customerId: id, property: prop }))}
+                  selectedEmail={form.customerEmail}
+                  onSelect={(email, prop) => setForm(f => ({ ...f, customerEmail: email, property: prop }))}
                   customers={customers}
                 />
               </div>
@@ -740,7 +740,7 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={handleAddTicket}
-                disabled={!form.customerId}
+                disabled={!form.customerEmail}
                 className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
               >
                 Save

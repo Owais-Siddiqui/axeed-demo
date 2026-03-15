@@ -9,7 +9,6 @@ import {
   SetStateAction,
   ReactNode,
 } from "react"
-import { supabase } from "@/lib/supabase"
 import { Ticket, TicketEvent, Customer, Worker } from "@/types/index"
 
 // ─── Dashboard state (persists across navigation) ────────────────────────────
@@ -45,6 +44,12 @@ interface TicketContextType {
   updateTicket: (id: string, updates: Partial<Ticket>) => Promise<void>
   deleteTicket: (id: string) => Promise<void>
   addEvent: (event: TicketEvent) => Promise<void>
+  addCustomer: (customer: Customer) => Promise<void>
+  updateCustomer: (id: string, updates: Partial<Customer>) => Promise<void>
+  deleteCustomer: (id: string) => Promise<void>
+  addWorker: (worker: Worker) => Promise<void>
+  updateWorker: (id: string, updates: Partial<Worker>) => Promise<void>
+  deleteWorker: (id: string) => Promise<void>
   dashboardState: DashboardState
   setDashboardState: Dispatch<SetStateAction<DashboardState>>
 }
@@ -66,20 +71,16 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     async function loadAll() {
       try {
         setIsLoading(true)
-        const [cusRes, wrkRes, tktRes, evtRes] = await Promise.all([
-          supabase.from("customers").select("*").order("full_name"),
-          supabase.from("workers").select("*").order("full_name"),
-          supabase.from("tickets").select("*").order("created_at", { ascending: false }),
-          supabase.from("ticket_events").select("*").order("created_at"),
-        ])
-        if (cusRes.error) throw new Error(cusRes.error.message)
-        if (wrkRes.error) throw new Error(wrkRes.error.message)
-        if (tktRes.error) throw new Error(tktRes.error.message)
-        if (evtRes.error) throw new Error(evtRes.error.message)
-        setCustomers(cusRes.data as Customer[])
-        setWorkers(wrkRes.data as Worker[])
-        setTickets(tktRes.data as Ticket[])
-        setTicketEvents(evtRes.data as TicketEvent[])
+        const res = await fetch("/api/data")
+        if (!res.ok) {
+          const { error } = await res.json()
+          throw new Error(error ?? "Failed to load data")
+        }
+        const data = await res.json()
+        setCustomers(data.customers as Customer[])
+        setWorkers(data.workers as Worker[])
+        setTickets(data.tickets as Ticket[])
+        setTicketEvents(data.ticketEvents as TicketEvent[])
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load data")
       } finally {
@@ -90,23 +91,83 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   }, [])
 
   async function addTicket(ticket: Ticket) {
-    const { error } = await supabase.from("tickets").insert(ticket)
-    if (!error) setTickets(prev => [ticket, ...prev])
+    const res = await fetch("/api/tickets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(ticket),
+    })
+    if (res.ok) setTickets(prev => [ticket, ...prev])
   }
 
   async function updateTicket(id: string, updates: Partial<Ticket>) {
-    const { error } = await supabase.from("tickets").update(updates).eq("id", id)
-    if (!error) setTickets(prev => prev.map(t => (t.id === id ? { ...t, ...updates } : t)))
+    const res = await fetch(`/api/tickets/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    })
+    if (res.ok) setTickets(prev => prev.map(t => (t.id === id ? { ...t, ...updates } : t)))
   }
 
   async function deleteTicket(id: string) {
-    const { error } = await supabase.from("tickets").delete().eq("id", id)
-    if (!error) setTickets(prev => prev.filter(t => t.id !== id))
+    const res = await fetch(`/api/tickets/${id}`, {
+      method: "DELETE",
+    })
+    if (res.ok) setTickets(prev => prev.filter(t => t.id !== id))
   }
 
   async function addEvent(event: TicketEvent) {
-    const { error } = await supabase.from("ticket_events").insert(event)
-    if (!error) setTicketEvents(prev => [...prev, event])
+    const res = await fetch("/api/ticket-events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(event),
+    })
+    if (res.ok) setTicketEvents(prev => [...prev, event])
+  }
+
+  async function addCustomer(customer: Customer) {
+    const res = await fetch("/api/customers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(customer),
+    })
+    if (res.ok) setCustomers(prev => [...prev, customer].sort((a, b) => a.full_name.localeCompare(b.full_name)))
+  }
+
+  async function updateCustomer(id: string, updates: Partial<Customer>) {
+    const res = await fetch(`/api/customers/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    })
+    if (res.ok) setCustomers(prev => prev.map(c => (c.id === id ? { ...c, ...updates } : c)))
+  }
+
+  async function deleteCustomer(id: string) {
+    const res = await fetch(`/api/customers/${id}`, { method: "DELETE" })
+    if (res.ok) setCustomers(prev => prev.filter(c => c.id !== id))
+  }
+
+  async function addWorker(worker: Worker) {
+    const res = await fetch("/api/workers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(worker),
+    })
+    if (res.ok) setWorkers(prev => [...prev, worker].sort((a, b) => a.full_name.localeCompare(b.full_name)))
+  }
+
+  async function updateWorker(id: string, updates: Partial<Worker>) {
+    const res = await fetch(`/api/workers/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    })
+    if (res.ok) setWorkers(prev => prev.map(w => (w.id === id ? { ...w, ...updates } : w)))
+  }
+
+  async function deleteWorker(id: string) {
+    const res = await fetch(`/api/workers/${id}`, { method: "DELETE" })
+    if (res.ok) setWorkers(prev => prev.filter(w => w.id !== id))
   }
 
   return (
@@ -122,6 +183,12 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         updateTicket,
         deleteTicket,
         addEvent,
+        addCustomer,
+        updateCustomer,
+        deleteCustomer,
+        addWorker,
+        updateWorker,
+        deleteWorker,
         dashboardState,
         setDashboardState,
       }}

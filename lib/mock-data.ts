@@ -164,7 +164,7 @@ export const mockTickets: Ticket[] = [
   {
     id: "t1",
     ticket_ref: "TKT-0001",
-    customer_id: "c1",
+    customer_email: "ahmed.mansoori@email.com",
     worker_id: null,
     property: "Villa-12",
     job_type: "plumbing",
@@ -190,7 +190,7 @@ export const mockTickets: Ticket[] = [
   {
     id: "t2",
     ticket_ref: "TKT-0002",
-    customer_id: "c2",
+    customer_email: "sara.ibrahim@email.com",
     worker_id: "w2",
     property: "Apt-B7",
     job_type: "electrical",
@@ -215,7 +215,7 @@ export const mockTickets: Ticket[] = [
   {
     id: "t3",
     ticket_ref: "TKT-0003",
-    customer_id: "c3",
+    customer_email: "omar.farooq@email.com",
     worker_id: "w2",
     property: "Villa-34",
     job_type: "hvac",
@@ -240,7 +240,7 @@ export const mockTickets: Ticket[] = [
   {
     id: "t4",
     ticket_ref: "TKT-0004",
-    customer_id: "c4",
+    customer_email: "fatima.noor@email.com",
     worker_id: "w3",
     property: "Apt-C3",
     job_type: "carpentry",
@@ -267,7 +267,7 @@ export const mockTickets: Ticket[] = [
   {
     id: "t5",
     ticket_ref: "TKT-0005",
-    customer_id: "c5",
+    customer_email: "rania.hassan@email.com",
     worker_id: "w1",
     property: "Villa-08",
     job_type: "plumbing",
@@ -292,7 +292,7 @@ export const mockTickets: Ticket[] = [
   {
     id: "t6",
     ticket_ref: "TKT-0006",
-    customer_id: "c6",
+    customer_email: "yousef.zaabi@email.com",
     worker_id: null,
     property: "Apt-D11",
     job_type: "general",
@@ -317,7 +317,7 @@ export const mockTickets: Ticket[] = [
   {
     id: "t7",
     ticket_ref: "TKT-0007",
-    customer_id: "c7",
+    customer_email: "layla.mahmoud@email.com",
     worker_id: "w2",
     property: "Villa-21",
     job_type: "electrical",
@@ -343,7 +343,7 @@ export const mockTickets: Ticket[] = [
   {
     id: "t8",
     ticket_ref: "TKT-0008",
-    customer_id: "c8",
+    customer_email: "bilal.qureshi@email.com",
     worker_id: "w2",
     property: "Apt-A2",
     job_type: "hvac",
@@ -370,7 +370,7 @@ export const mockTickets: Ticket[] = [
   {
     id: "t9",
     ticket_ref: "TKT-0009",
-    customer_id: "c9",
+    customer_email: "mariam.ketbi@email.com",
     worker_id: null,
     property: "Villa-55",
     job_type: "carpentry",
@@ -395,7 +395,7 @@ export const mockTickets: Ticket[] = [
   {
     id: "t10",
     ticket_ref: "TKT-0010",
-    customer_id: "c10",
+    customer_email: "tariq.binzayed@email.com",
     worker_id: "w1",
     property: "Apt-F6",
     job_type: "plumbing",

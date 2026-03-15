@@ -129,7 +129,7 @@ function FieldRow({
 // ─── Edit Form Type ───────────────────────────────────────────────────────────
 
 type EditForm = {
-  customerId: string
+  customerEmail: string
   property: string
   jobType: string
   urgency: Urgency
@@ -149,7 +149,7 @@ export default function TicketDetailPage() {
   const { customers, workers, tickets, ticketEvents, updateTicket, deleteTicket, addEvent } = useTickets()
 
   const ticket = tickets.find(t => t.id === params.id)
-  const customer = ticket ? customers.find(c => c.id === ticket.customer_id) : null
+  const customer = ticket ? customers.find(c => c.email === ticket.customer_email) : null
   const worker = ticket ? workers.find(w => w.id === ticket.worker_id) : null
   const events = ticket
     ? ticketEvents.filter(e => e.ticket_id === ticket.id).sort(
@@ -166,7 +166,7 @@ export default function TicketDetailPage() {
   const [selectedWorkerId, setSelectedWorkerId] = useState<string>(ticket?.worker_id ?? "")
   const [noteText, setNoteText] = useState("")
   const [editForm, setEditForm] = useState<EditForm>({
-    customerId: ticket?.customer_id ?? "",
+    customerEmail: ticket?.customer_email ?? "",
     property: ticket?.property ?? "",
     jobType: ticket?.job_type ?? "plumbing",
     urgency: ticket?.urgency ?? "low",
@@ -184,7 +184,7 @@ export default function TicketDetailPage() {
     return (
       <div className="p-6 flex items-center gap-3 text-gray-500">
         <button
-          onClick={() => router.push("/dashboard")}
+          onClick={() => router.back()}
           className="hover:bg-gray-100 rounded-full p-1.5 transition-colors duration-150"
         >
           <ArrowLeft size={20} />
@@ -198,7 +198,7 @@ export default function TicketDetailPage() {
 
   function handleOpenEdit() {
     setEditForm({
-      customerId: ticket!.customer_id,
+      customerEmail: ticket!.customer_email,
       property: ticket!.property,
       jobType: ticket!.job_type,
       urgency: ticket!.urgency,
@@ -215,7 +215,7 @@ export default function TicketDetailPage() {
   async function handleEditSave() {
     const now = new Date().toISOString()
     await updateTicket(ticket!.id, {
-      customer_id: editForm.customerId,
+      customer_email: editForm.customerEmail,
       property: editForm.property,
       job_type: editForm.jobType,
       urgency: editForm.urgency,
@@ -289,7 +289,7 @@ export default function TicketDetailPage() {
 
   async function handleDeleteConfirm() {
     await deleteTicket(ticket!.id)
-    router.push("/dashboard")
+    router.back()
   }
 
   // ── Contract expiry check ─────────────────────────────────────────────────
@@ -306,7 +306,7 @@ export default function TicketDetailPage() {
       {/* ── Top Bar ── */}
       <div className="flex items-center gap-4">
         <button
-          onClick={() => router.push("/dashboard")}
+          onClick={() => router.back()}
           className="hover:bg-gray-100 rounded-full p-1.5 transition-colors duration-150 text-gray-600 flex-shrink-0"
         >
           <ArrowLeft size={20} />
@@ -609,15 +609,15 @@ export default function TicketDetailPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
                 <select
-                  value={editForm.customerId}
+                  value={editForm.customerEmail}
                   onChange={e => {
-                    const c = customers.find(c => c.id === e.target.value)
-                    setEditForm(f => ({ ...f, customerId: e.target.value, property: c?.property_ref ?? f.property }))
+                    const c = customers.find(c => c.email === e.target.value)
+                    setEditForm(f => ({ ...f, customerEmail: e.target.value, property: c?.property_ref ?? f.property }))
                   }}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {customers.map(c => (
-                    <option key={c.id} value={c.id}>{c.full_name}</option>
+                    <option key={c.id} value={c.email}>{c.full_name}</option>
                   ))}
                 </select>
               </div>
