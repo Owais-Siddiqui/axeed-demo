@@ -20,6 +20,9 @@ export type DashboardState = {
   filterStatus: string
   filterJobType: string
   filterUrgency: string
+  filterDatePreset: string
+  filterDateFrom: string
+  filterDateTo: string
   activeCard: string | null
 }
 
@@ -29,6 +32,9 @@ const DEFAULT_DASHBOARD: DashboardState = {
   filterStatus: "",
   filterJobType: "",
   filterUrgency: "",
+  filterDatePreset: "",
+  filterDateFrom: "",
+  filterDateTo: "",
   activeCard: null,
 }
 
@@ -68,27 +74,31 @@ export function TicketProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const [dashboardState, setDashboardState] = useState<DashboardState>(DEFAULT_DASHBOARD)
 
-  useEffect(() => {
-    async function loadAll() {
-      try {
-        setIsLoading(true)
-        const res = await fetch("/api/data")
-        if (!res.ok) {
-          const { error } = await res.json()
-          throw new Error(error ?? "Failed to load data")
-        }
-        const data = await res.json()
-        setCustomers(data.customers as Customer[])
-        setWorkers(data.workers as Worker[])
-        setTickets(data.tickets as Ticket[])
-        setTicketEvents(data.ticketEvents as TicketEvent[])
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load data")
-      } finally {
-        setIsLoading(false)
+  async function loadAll(silent = false) {
+    try {
+      if (!silent) setIsLoading(true)
+      const res = await fetch("/api/data")
+      if (!res.ok) {
+        const { error } = await res.json()
+        throw new Error(error ?? "Failed to load data")
       }
+      const data = await res.json()
+      setCustomers(data.customers as Customer[])
+      setWorkers(data.workers as Worker[])
+      setTickets(data.tickets as Ticket[])
+      setTicketEvents(data.ticketEvents as TicketEvent[])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load data")
+    } finally {
+      if (!silent) setIsLoading(false)
     }
+  }
+
+  useEffect(() => {
     loadAll()
+    const poll = setInterval(() => loadAll(true), 30_000)
+    return () => clearInterval(poll)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -127,7 +137,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     })
     if (res.ok) {
       const { data } = await res.json()
-      setTickets(prev => [data as Ticket, ...prev])
+      setTickets(prev => prev.some(t => t.id === (data as Ticket).id) ? prev : [data as Ticket, ...prev])
       return data as Ticket
     }
     return null

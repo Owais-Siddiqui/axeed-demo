@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useTickets } from "@/lib/store"
 import { Worker } from "@/types/index"
 import { Plus, Pencil, X } from "lucide-react"
+import { Pagination } from "@/components/pagination"
 
 // ─── Blank form ───────────────────────────────────────────────────────────────
 
@@ -32,6 +33,10 @@ export default function WorkersPage() {
   const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState(BLANK)
   const [saving, setSaving] = useState(false)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
+
+  const paged = workers.slice((page - 1) * pageSize, page * pageSize)
 
   function openAdd() {
     setEditId(null)
@@ -119,7 +124,7 @@ export default function WorkersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {workers.map(w => (
+              {paged.map(w => (
                 <tr
                   key={w.id}
                   onClick={() => router.push(`/dashboard/workers/${w.id}`)}
@@ -165,6 +170,13 @@ export default function WorkersPage() {
               )}
             </tbody>
           </table>
+          <Pagination
+            total={workers.length}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(1) }}
+          />
         </div>
       </div>
 

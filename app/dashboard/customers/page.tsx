@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useTickets } from "@/lib/store"
 import { Customer } from "@/types/index"
 import { Plus, Pencil, X, AlertTriangle, Search } from "lucide-react"
+import { Pagination } from "@/components/pagination"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,10 @@ export default function CustomersPage() {
   const [form, setForm] = useState<Omit<Customer, "id">>(BLANK)
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState("")
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
+
+  useEffect(() => { setPage(1) }, [search])
 
   function openAdd() {
     setEditId(null)
@@ -122,6 +127,7 @@ export default function CustomersPage() {
     c.building_name.toLowerCase().includes(q) ||
     c.area.toLowerCase().includes(q)
   )
+  const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -166,7 +172,7 @@ export default function CustomersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {filtered.map(c => {
+            {paged.map(c => {
               const exp = expiryStatus(c.contract_expiry)
               return (
                 <tr
@@ -213,6 +219,13 @@ export default function CustomersPage() {
             )}
           </tbody>
         </table>
+        <Pagination
+          total={filtered.length}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(s) => { setPageSize(s); setPage(1) }}
+        />
       </div>
 
       {/* Modal */}

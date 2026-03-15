@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useTickets } from "@/lib/store"
 import { Ticket, Urgency, Status, Customer } from "@/types/index"
+import { Pagination } from "@/components/pagination"
 import {
   LayoutList,
   Inbox,
@@ -26,6 +27,7 @@ import {
   Wrench,
   HardHat,
   X,
+  Calendar,
 } from "lucide-react"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -204,7 +206,7 @@ export default function DashboardPage() {
   const { customers, workers, tickets, addTicket, deleteTicket, addEvent, dashboardState, setDashboardState } = useTickets()
 
   // Destructure persistent state from context
-  const { view, search, filterStatus, filterJobType, filterUrgency, activeCard } = dashboardState
+  const { view, search, filterStatus, filterJobType, filterUrgency, filterDatePreset, filterDateFrom, filterDateTo, activeCard } = dashboardState
 
   // Setters that update context (persisted across navigation)
   const setView = (v: "table" | "kanban") => setDashboardState(s => ({ ...s, view: v }))
@@ -212,7 +214,17 @@ export default function DashboardPage() {
   const setFilterStatus = (v: string) => setDashboardState(s => ({ ...s, filterStatus: v }))
   const setFilterJobType = (v: string) => setDashboardState(s => ({ ...s, filterJobType: v }))
   const setFilterUrgency = (v: string) => setDashboardState(s => ({ ...s, filterUrgency: v }))
+  const setFilterDatePreset = (v: string) => setDashboardState(s => ({ ...s, filterDatePreset: v, filterDateFrom: "", filterDateTo: "" }))
+  const setFilterDateFrom = (v: string) => setDashboardState(s => ({ ...s, filterDateFrom: v }))
+  const setFilterDateTo = (v: string) => setDashboardState(s => ({ ...s, filterDateTo: v }))
   const setActiveCard = (card: string | null) => setDashboardState(s => ({ ...s, activeCard: card }))
+
+  // Pagination
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => { setPage(1) }, [search, filterStatus, filterJobType, filterUrgency, filterDatePreset, filterDateFrom, filterDateTo, activeCard])
 
   // Local-only modal state (not persisted)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -245,6 +257,9 @@ export default function DashboardPage() {
   // ── Filtered tickets ───────────────────────────────────────────────────────
 
   const filteredTickets = useMemo(() => {
+    const now = new Date()
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
     return tickets.filter(ticket => {
       if (activeCard === "open"       && ticket.status !== "OPEN")        return false
       if (activeCard === "assigned"   && ticket.status !== "ASSIGNED")    return false
@@ -254,6 +269,30 @@ export default function DashboardPage() {
       if (filterStatus   && ticket.status    !== filterStatus)   return false
       if (filterJobType  && ticket.job_type  !== filterJobType)  return false
       if (filterUrgency  && ticket.urgency   !== filterUrgency)  return false
+
+      if (filterDatePreset) {
+        const created = new Date(ticket.created_at)
+        if (filterDatePreset === "today") {
+          const end = new Date(todayStart.getTime() + 86_400_000)
+          if (created < todayStart || created >= end) return false
+        } else if (filterDatePreset === "week") {
+          const weekStart = new Date(todayStart.getTime() - todayStart.getDay() * 86_400_000)
+          const weekEnd = new Date(weekStart.getTime() + 7 * 86_400_000)
+          if (created < weekStart || created >= weekEnd) return false
+        } else if (filterDatePreset === "month") {
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+          const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+          if (created < monthStart || created >= monthEnd) return false
+        } else if (filterDatePreset === "custom") {
+          if (filterDateFrom && created < new Date(filterDateFrom)) return false
+          if (filterDateTo) {
+            const to = new Date(filterDateTo)
+            to.setDate(to.getDate() + 1)
+            if (created >= to) return false
+          }
+        }
+      }
+
       if (search) {
         const customer = customers.find(c => c.email === ticket.customer_email)
         const q = search.toLowerCase()
@@ -265,9 +304,11 @@ export default function DashboardPage() {
       }
       return true
     })
-  }, [tickets, activeCard, filterStatus, filterJobType, filterUrgency, search])
+  }, [tickets, activeCard, filterStatus, filterJobType, filterUrgency, filterDatePreset, filterDateFrom, filterDateTo, search])
 
-  const hasFilters = !!(search || filterStatus || filterJobType || filterUrgency || activeCard)
+  const pagedTickets = filteredTickets.slice((page - 1) * pageSize, page * pageSize)
+
+  const hasFilters = !!(search || filterStatus || filterJobType || filterUrgency || filterDatePreset || activeCard)
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -286,6 +327,9 @@ export default function DashboardPage() {
       filterStatus: "",
       filterJobType: "",
       filterUrgency: "",
+      filterDatePreset: "",
+      filterDateFrom: "",
+      filterDateTo: "",
       activeCard: null,
     }))
   }
@@ -423,6 +467,39 @@ export default function DashboardPage() {
           <option value="high">High</option>
         </select>
 
+        {/* Date Filter */}
+        <div className="flex items-center gap-1 text-gray-500">
+          <Calendar size={16} />
+        </div>
+        <select
+          value={filterDatePreset}
+          onChange={e => setFilterDatePreset(e.target.value)}
+          className={SELECT_CLS}
+        >
+          <option value="">All Dates</option>
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="custom">Custom Range</option>
+        </select>
+        {filterDatePreset === "custom" && (
+          <>
+            <input
+              type="date"
+              value={filterDateFrom}
+              onChange={e => setFilterDateFrom(e.target.value)}
+              className={SELECT_CLS}
+            />
+            <span className="text-gray-400 text-sm">to</span>
+            <input
+              type="date"
+              value={filterDateTo}
+              onChange={e => setFilterDateTo(e.target.value)}
+              className={SELECT_CLS}
+            />
+          </>
+        )}
+
         {/* Clear Filters */}
         <button
           onClick={clearAllFilters}
@@ -487,7 +564,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredTickets.map(ticket => {
+                {pagedTickets.map(ticket => {
                   const customer = customers.find(c => c.email === ticket.customer_email)
                   const worker = workers.find(w => w.id === ticket.worker_id)
                   const overdue = isOverdue(ticket)
@@ -550,6 +627,13 @@ export default function DashboardPage() {
               </tbody>
             </table>
           </div>
+          <Pagination
+            total={filteredTickets.length}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(1) }}
+          />
         </div>
       )}
 
