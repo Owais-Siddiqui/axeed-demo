@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 })
 
-    if (current.status === "PENDING") {
+    if (current.status === "OPEN") {
       body.status = "ASSIGNED"
       body.assigned_at = new Date().toISOString()
     }
