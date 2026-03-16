@@ -44,10 +44,10 @@ function isOverdue(ticket: Ticket): boolean {
 
 function StatusBadge({ status }: { status: Status }) {
   const styles: Record<Status, string> = {
-    OPEN: "bg-gray-100 text-gray-700",
-    ASSIGNED: "bg-blue-100 text-blue-700",
-    IN_PROGRESS: "bg-amber-100 text-amber-700",
-    COMPLETED: "bg-green-100 text-green-700",
+    OPEN: "bg-slate-700 text-slate-300",
+    ASSIGNED: "bg-blue-500/15 text-blue-400",
+    IN_PROGRESS: "bg-amber-500/15 text-amber-400",
+    COMPLETED: "bg-emerald-500/15 text-emerald-400",
   }
   const labels: Record<Status, string> = {
     OPEN: "Open",
@@ -64,9 +64,9 @@ function StatusBadge({ status }: { status: Status }) {
 
 function UrgencyBadge({ urgency }: { urgency: Urgency }) {
   const styles: Record<Urgency, string> = {
-    low: "bg-green-100 text-green-700",
-    medium: "bg-yellow-100 text-yellow-700",
-    high: "bg-red-100 text-red-700",
+    low: "bg-emerald-500/15 text-emerald-400",
+    medium: "bg-amber-500/15 text-amber-400",
+    high: "bg-rose-500/15 text-rose-400",
   }
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${styles[urgency]}`}>
@@ -82,7 +82,7 @@ function ViaIcon({ via }: { via: Ticket["reported_via"] }) {
     phone: <Phone size={14} />,
     manual: <ClipboardPen size={14} />,
   }
-  return <span className="text-gray-500 flex items-center">{icons[via]}</span>
+  return <span className="text-slate-400 flex items-center">{icons[via]}</span>
 }
 
 function fmtDate(iso: string): string {
@@ -135,27 +135,27 @@ function CustomerCombobox({
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         placeholder="Type customer email to search..."
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         autoComplete="off"
       />
       {open && (
-        <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+        <div className="absolute z-20 w-full mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
           {matches.length > 0 ? (
             matches.map(c => (
               <button
                 key={c.id}
                 type="button"
                 onMouseDown={e => { e.preventDefault(); handleSelect(c) }}
-                className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors duration-100 ${
-                  selectedEmail === c.email ? "bg-blue-50 font-medium" : ""
+                className={`w-full text-left px-3 py-2 text-sm hover:bg-indigo-500/10 transition-colors duration-100 ${
+                  selectedEmail === c.email ? "bg-indigo-500/10 font-medium" : ""
                 }`}
               >
-                <div className="text-gray-900">{c.email}</div>
-                <div className="text-gray-400 text-xs">{c.full_name}</div>
+                <div className="text-white">{c.email}</div>
+                <div className="text-slate-500 text-xs">{c.full_name}</div>
               </button>
             ))
           ) : (
-            <div className="px-3 py-2 text-sm text-gray-400">No customers found</div>
+            <div className="px-3 py-2 text-sm text-slate-500">No customers found</div>
           )}
         </div>
       )}
@@ -197,7 +197,12 @@ const KANBAN_COLUMNS: { status: Status; label: string }[] = [
 ]
 
 const SELECT_CLS =
-  "border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+  "border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+
+const INPUT_CLS =
+  "w-full bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+
+const LABEL_CLS = "block text-sm font-medium text-slate-300 mb-1"
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -391,13 +396,13 @@ export default function DashboardPage() {
             <button
               key={card.key}
               onClick={() => handleCardClick(card.key)}
-              className={`bg-white rounded-xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-md transition-shadow duration-200 cursor-pointer text-left ${
-                isActive ? "ring-2 ring-blue-500 bg-blue-50" : ""
+              className={`bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 flex flex-col gap-2 hover:shadow-[0_0_15px_rgba(99,102,241,0.15)] hover:border-indigo-500/30 transition-all duration-300 cursor-pointer text-left ${
+                isActive ? "ring-2 ring-indigo-500 bg-indigo-500/10 border-indigo-500/30" : ""
               }`}
             >
-              <div className="text-gray-500">{card.icon}</div>
-              <div className="text-2xl font-bold text-gray-900">{card.count}</div>
-              <div className="text-sm text-gray-500">{card.label}</div>
+              <div className="text-slate-400">{card.icon}</div>
+              <div className="text-2xl font-bold text-white">{card.count}</div>
+              <div className="text-sm text-slate-400">{card.label}</div>
             </button>
           )
         })}
@@ -407,17 +412,17 @@ export default function DashboardPage() {
       <div className="flex items-center gap-3 flex-wrap">
         {/* Search */}
         <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
             placeholder="Search tickets..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-56"
+            className="pl-9 pr-4 py-2 border border-slate-600 rounded-lg text-sm text-white placeholder:text-slate-500 bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56 transition-all duration-200"
           />
         </div>
 
-        <div className="flex items-center gap-1 text-gray-500">
+        <div className="flex items-center gap-1 text-slate-500">
           <SlidersHorizontal size={16} />
         </div>
 
@@ -458,7 +463,7 @@ export default function DashboardPage() {
         </select>
 
         {/* Date Filter */}
-        <div className="flex items-center gap-1 text-gray-500">
+        <div className="flex items-center gap-1 text-slate-500">
           <Calendar size={16} />
         </div>
         <select
@@ -480,7 +485,7 @@ export default function DashboardPage() {
               onChange={e => setFilterDateFrom(e.target.value)}
               className={SELECT_CLS}
             />
-            <span className="text-gray-400 text-sm">to</span>
+            <span className="text-slate-500 text-sm">to</span>
             <input
               type="date"
               value={filterDateTo}
@@ -494,10 +499,10 @@ export default function DashboardPage() {
         <button
           onClick={clearAllFilters}
           disabled={!hasFilters}
-          className={`flex items-center gap-1.5 border rounded-lg px-3 py-2 text-sm transition-colors duration-150 ${
+          className={`flex items-center gap-1.5 border rounded-lg px-3 py-2 text-sm transition-all duration-200 ${
             hasFilters
-              ? "border-red-300 text-red-600 hover:bg-red-50"
-              : "border-gray-200 text-gray-300 cursor-not-allowed"
+              ? "border-rose-500/30 text-rose-400 hover:bg-rose-500/10"
+              : "border-slate-700 text-slate-600 cursor-not-allowed"
           }`}
         >
           <X size={14} />
@@ -511,16 +516,16 @@ export default function DashboardPage() {
           <button
             onClick={() => setView("table")}
             className={`${
-              view === "table" ? "bg-blue-600 text-white" : "bg-white border border-gray-300 text-gray-500"
-            } rounded-md px-3 py-1.5 flex items-center`}
+              view === "table" ? "bg-indigo-500 text-white" : "bg-slate-800 border border-slate-600 text-slate-400"
+            } rounded-md px-3 py-1.5 flex items-center transition-all duration-200`}
           >
             <LayoutList size={18} />
           </button>
           <button
             onClick={() => setView("kanban")}
             className={`${
-              view === "kanban" ? "bg-blue-600 text-white" : "bg-white border border-gray-300 text-gray-500"
-            } rounded-md px-3 py-1.5 flex items-center`}
+              view === "kanban" ? "bg-indigo-500 text-white" : "bg-slate-800 border border-slate-600 text-slate-400"
+            } rounded-md px-3 py-1.5 flex items-center transition-all duration-200`}
           >
             <Columns size={18} />
           </button>
@@ -529,7 +534,7 @@ export default function DashboardPage() {
         {/* New Ticket */}
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white rounded-lg px-4 py-2 text-sm hover:bg-blue-700 transition-colors duration-150"
+          className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-violet-600 text-white rounded-lg px-4 py-2 text-sm hover:from-indigo-400 hover:to-violet-500 hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all duration-300"
         >
           <Plus size={16} />
           New Ticket
@@ -538,22 +543,22 @@ export default function DashboardPage() {
 
       {/* ── Table View ── */}
       {view === "table" && (
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="sticky top-0 bg-white border-b border-gray-200">
+              <thead className="sticky top-0 bg-slate-800 border-b border-slate-700">
                 <tr>
                   {["Ticket Ref", "Customer", "Property", "Job Type", "Urgency", "Status", "Worker", "Via", "Created At", "Actions"].map(col => (
                     <th
                       key={col}
-                      className="text-xs uppercase text-gray-500 font-semibold px-4 py-3 text-left whitespace-nowrap"
+                      className="text-xs uppercase text-slate-400 font-semibold px-4 py-3 text-left whitespace-nowrap tracking-wide"
                     >
                       {col}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-700/50">
                 {pagedTickets.map(ticket => {
                   const customer = customers.find(c => c.email === ticket.customer_email)
                   const worker = workers.find(w => w.id === ticket.worker_id)
@@ -562,43 +567,43 @@ export default function DashboardPage() {
                     <tr
                       key={ticket.id}
                       onClick={() => router.push(`/dashboard/tickets/${ticket.id}`)}
-                      className={`transition-colors duration-150 hover:bg-blue-50 cursor-pointer ${
-                        overdue ? "bg-red-50" : ""
+                      className={`transition-all duration-200 hover:bg-indigo-500/5 cursor-pointer ${
+                        overdue ? "bg-rose-500/5" : ""
                       }`}
                     >
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-semibold text-gray-900">{ticket.ticket_ref}</span>
+                          <span className="font-mono font-semibold text-white">{ticket.ticket_ref}</span>
                           {overdue && (
-                            <span className="flex items-center gap-1 text-red-600 text-xs font-medium">
+                            <span className="flex items-center gap-1 text-rose-400 text-xs font-medium">
                               <Clock size={12} /> Overdue
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{customer?.full_name ?? "—"}</td>
-                      <td className="px-4 py-3 text-sm font-mono text-gray-700">{ticket.property}</td>
-                      <td className="px-4 py-3 text-sm capitalize text-gray-800">{ticket.job_type}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-white">{customer?.full_name ?? "—"}</td>
+                      <td className="px-4 py-3 text-sm font-mono text-slate-300">{ticket.property}</td>
+                      <td className="px-4 py-3 text-sm capitalize text-slate-200">{ticket.job_type}</td>
                       <td className="px-4 py-3"><UrgencyBadge urgency={ticket.urgency} /></td>
                       <td className="px-4 py-3"><StatusBadge status={ticket.status} /></td>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-800">
-                        {worker?.full_name ?? <span className="text-gray-400 font-normal">Unassigned</span>}
+                      <td className="px-4 py-3 text-sm font-medium text-slate-200">
+                        {worker?.full_name ?? <span className="text-slate-500 font-normal">Unassigned</span>}
                       </td>
                       <td className="px-4 py-3"><ViaIcon via={ticket.reported_via} /></td>
-                      <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                      <td className="px-4 py-3 text-sm text-slate-400 whitespace-nowrap">
                         {fmtDate(ticket.created_at)}
                       </td>
                       <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => router.push(`/dashboard/tickets/${ticket.id}`)}
-                            className="hover:bg-gray-100 rounded-full p-1.5 transition-colors duration-150 text-gray-500"
+                            className="hover:bg-slate-700 rounded-full p-1.5 transition-colors duration-150 text-slate-500"
                           >
                             <Pencil size={16} />
                           </button>
                           <button
                             onClick={() => setDeleteTargetId(ticket.id)}
-                            className="hover:bg-gray-100 rounded-full p-1.5 transition-colors duration-150 text-gray-500"
+                            className="hover:bg-slate-700 rounded-full p-1.5 transition-colors duration-150 text-slate-500"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -609,7 +614,7 @@ export default function DashboardPage() {
                 })}
                 {filteredTickets.length === 0 && (
                   <tr>
-                    <td colSpan={10} className="px-4 py-12 text-center text-gray-400 text-sm">
+                    <td colSpan={10} className="px-4 py-12 text-center text-slate-500 text-sm">
                       No tickets match the current filters.
                     </td>
                   </tr>
@@ -633,15 +638,15 @@ export default function DashboardPage() {
           {KANBAN_COLUMNS.map(({ status, label }) => {
             const colTickets = filteredTickets.filter(t => t.status === status)
             const badgeStyle: Record<Status, string> = {
-              OPEN:        "bg-gray-100 text-gray-700",
-              ASSIGNED:    "bg-blue-100 text-blue-700",
-              IN_PROGRESS: "bg-amber-100 text-amber-700",
-              COMPLETED:   "bg-green-100 text-green-700",
+              OPEN:        "bg-slate-700 text-slate-300",
+              ASSIGNED:    "bg-blue-500/15 text-blue-400",
+              IN_PROGRESS: "bg-amber-500/15 text-amber-400",
+              COMPLETED:   "bg-emerald-500/15 text-emerald-400",
             }
             return (
-              <div key={status} className="bg-gray-100 rounded-xl p-3 min-h-96">
+              <div key={status} className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-3 min-h-96">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="font-semibold text-sm text-gray-800">{label}</span>
+                  <span className="font-semibold text-sm text-slate-200">{label}</span>
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badgeStyle[status]}`}>
                     {colTickets.length}
                   </span>
@@ -654,39 +659,39 @@ export default function DashboardPage() {
                     <div
                       key={ticket.id}
                       onClick={() => router.push(`/dashboard/tickets/${ticket.id}`)}
-                      className={`bg-white rounded-lg shadow-sm p-4 mb-3 hover:shadow-md transition-shadow duration-200 cursor-pointer ${
-                        overdue ? "border-l-4 border-red-400" : ""
+                      className={`bg-slate-800 border border-slate-700/50 rounded-lg p-4 mb-3 hover:shadow-[0_0_15px_rgba(99,102,241,0.1)] hover:border-indigo-500/20 transition-all duration-300 cursor-pointer ${
+                        overdue ? "border-l-4 border-l-rose-500" : ""
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-mono text-xs font-semibold text-gray-700">{ticket.ticket_ref}</span>
+                        <span className="font-mono text-xs font-semibold text-slate-300">{ticket.ticket_ref}</span>
                         <UrgencyBadge urgency={ticket.urgency} />
                       </div>
-                      <div className="font-semibold text-sm text-gray-900 mb-1">
+                      <div className="font-semibold text-sm text-white mb-1">
                         {customer?.full_name ?? "—"}
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
+                      <div className="flex items-center gap-1 text-xs text-slate-400 mb-1">
                         <Building2 size={12} />
                         <span>{ticket.property}</span>
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-600 mb-3">
+                      <div className="flex items-center gap-1 text-xs text-slate-400 mb-3">
                         <Wrench size={12} />
                         <span className="capitalize">{ticket.job_type}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 text-xs font-medium text-gray-700">
+                        <div className="flex items-center gap-1 text-xs font-medium text-slate-300">
                           <HardHat size={12} />
-                          <span>{worker?.full_name ?? <span className="text-gray-400 font-normal">Unassigned</span>}</span>
+                          <span>{worker?.full_name ?? <span className="text-slate-500 font-normal">Unassigned</span>}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           {overdue && (
-                            <span className="flex items-center gap-1 text-red-600 text-xs font-medium">
+                            <span className="flex items-center gap-1 text-rose-400 text-xs font-medium">
                               <Clock size={12} /> Overdue
                             </span>
                           )}
                           <button
                             onClick={e => { e.stopPropagation(); setDeleteTargetId(ticket.id) }}
-                            className="hover:bg-gray-100 rounded-full p-1 transition-colors duration-150 text-gray-400"
+                            className="hover:bg-slate-700 rounded-full p-1 transition-colors duration-150 text-slate-500"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -703,13 +708,13 @@ export default function DashboardPage() {
 
       {/* ── Add Ticket Modal ── */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-start justify-center overflow-y-auto" onClick={() => { setShowAddModal(false); setForm(EMPTY_FORM) }}>
-          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-auto mt-24 mb-8" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex items-start justify-center overflow-y-auto" onClick={() => { setShowAddModal(false); setForm(EMPTY_FORM) }}>
+          <div className="bg-slate-800 border border-slate-700/50 rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-auto mt-24 mb-8 animate-scaleIn" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">New Ticket</h2>
+              <h2 className="text-lg font-semibold text-white">New Ticket</h2>
               <button
                 onClick={() => { setShowAddModal(false); setForm(EMPTY_FORM) }}
-                className="hover:bg-gray-100 rounded-full p-1 text-gray-500"
+                className="hover:bg-slate-700 rounded-full p-1 text-slate-400 transition-colors"
               >
                 <X size={20} />
               </button>
@@ -717,7 +722,7 @@ export default function DashboardPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Customer Email</label>
+                <label className={LABEL_CLS}>Customer Email</label>
                 {/* key forces remount + state reset each time the modal opens */}
                 <CustomerCombobox
                   key={showAddModal ? "open" : "closed"}
@@ -729,31 +734,31 @@ export default function DashboardPage() {
 
               {form.customerName && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                  <label className={LABEL_CLS}>Customer Name</label>
                   <input
                     type="text"
                     value={form.customerName}
                     readOnly
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-gray-50 cursor-not-allowed"
+                    className="w-full bg-slate-700/30 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-slate-400 cursor-not-allowed"
                   />
                 </div>
               )}
 
               {form.property && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Property</label>
+                  <label className={LABEL_CLS}>Property</label>
                   <input
                     type="text"
                     value={form.property}
                     readOnly
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-gray-50 cursor-not-allowed"
+                    className="w-full bg-slate-700/30 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-slate-400 cursor-not-allowed"
                   />
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Job Type</label>
+                  <label className={LABEL_CLS}>Job Type</label>
                   <select
                     value={form.jobType}
                     onChange={e => setForm(f => ({ ...f, jobType: e.target.value }))}
@@ -765,7 +770,7 @@ export default function DashboardPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Urgency</label>
+                  <label className={LABEL_CLS}>Urgency</label>
                   <select
                     value={form.urgency}
                     onChange={e => setForm(f => ({ ...f, urgency: e.target.value as Urgency }))}
@@ -779,7 +784,7 @@ export default function DashboardPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reported Via</label>
+                <label className={LABEL_CLS}>Reported Via</label>
                 <select
                   value={form.reportedVia}
                   onChange={e => setForm(f => ({ ...f, reportedVia: e.target.value as Ticket["reported_via"] }))}
@@ -792,35 +797,35 @@ export default function DashboardPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location Notes</label>
+                <label className={LABEL_CLS}>Location Notes</label>
                 <input
                   type="text"
                   value={form.locationNotes}
                   onChange={e => setForm(f => ({ ...f, locationNotes: e.target.value }))}
                   placeholder="e.g. Kitchen, under the sink on the left side"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={INPUT_CLS}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Access Instructions</label>
+                <label className={LABEL_CLS}>Access Instructions</label>
                 <input
                   type="text"
                   value={form.accessInstructions}
                   onChange={e => setForm(f => ({ ...f, accessInstructions: e.target.value }))}
                   placeholder="e.g. Key with building security, available after 6pm"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={INPUT_CLS}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Job Description</label>
+                <label className={LABEL_CLS}>Job Description</label>
                 <textarea
                   rows={3}
                   value={form.jobDescription}
                   onChange={e => setForm(f => ({ ...f, jobDescription: e.target.value }))}
                   placeholder="Describe the issue in detail..."
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className={`${INPUT_CLS} resize-none`}
                 />
               </div>
             </div>
@@ -828,14 +833,14 @@ export default function DashboardPage() {
             <div className="flex items-center justify-end gap-3 mt-6">
               <button
                 onClick={() => { setShowAddModal(false); setForm(EMPTY_FORM) }}
-                className="border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
+                className="border border-slate-600 rounded-lg px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors duration-150"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddTicket}
                 disabled={!form.customerEmail}
-                className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                className="bg-gradient-to-r from-indigo-500 to-violet-600 text-white rounded-lg px-4 py-2 text-sm hover:from-indigo-400 hover:to-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
               >
                 Save
               </button>
@@ -846,23 +851,23 @@ export default function DashboardPage() {
 
       {/* ── Delete Confirmation Modal ── */}
       {deleteTargetId && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Delete Ticket</h2>
-            <p className="text-sm text-gray-600 mb-6">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex items-center justify-center">
+          <div className="bg-slate-800 border border-slate-700/50 rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 animate-scaleIn">
+            <h2 className="text-lg font-semibold text-white mb-2">Delete Ticket</h2>
+            <p className="text-sm text-slate-400 mb-6">
               Are you sure you want to delete{" "}
-              <span className="font-mono font-semibold">{deleteTarget?.ticket_ref}</span>? This cannot be undone.
+              <span className="font-mono font-semibold text-white">{deleteTarget?.ticket_ref}</span>? This cannot be undone.
             </p>
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => setDeleteTargetId(null)}
-                className="border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
+                className="border border-slate-600 rounded-lg px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors duration-150"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="bg-red-600 text-white rounded-lg px-4 py-2 text-sm hover:bg-red-700 transition-colors duration-150"
+                className="bg-rose-600 text-white rounded-lg px-4 py-2 text-sm hover:bg-rose-500 transition-colors duration-150"
               >
                 Confirm Delete
               </button>

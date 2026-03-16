@@ -44,8 +44,8 @@ const BLANK: Omit<Customer, "id"> = {
 // ─── Input / Select helpers ───────────────────────────────────────────────────
 
 const INPUT_CLS =
-  "border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
-const LABEL_CLS = "block text-sm font-medium text-gray-700 mb-1"
+  "w-full bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+const LABEL_CLS = "block text-sm font-medium text-slate-300 mb-1"
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -134,24 +134,24 @@ export default function CustomersPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Customers</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-bold text-white">Customers</h1>
+          <p className="text-sm text-slate-400 mt-0.5">
             {search ? `${filtered.length} of ${customers.length}` : customers.length} total
           </p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search by name, email, building…"
-              className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+              className="pl-9 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64"
             />
           </div>
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 bg-blue-600 text-white rounded-lg px-4 py-2 text-sm hover:bg-blue-700 transition-colors duration-150"
+            className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-violet-600 text-white rounded-lg px-4 py-2 text-sm hover:from-indigo-400 hover:to-violet-500 transition-colors duration-150"
           >
             <Plus size={16} />
             Add Customer
@@ -160,49 +160,49 @@ export default function CustomersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-slate-800 border-b border-slate-700">
             <tr>
               {["Name", "Email", "Phone", "Building", "Area", "Contract Expiry", "Contact Pref", ""].map(h => (
-                <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">
+                <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-400">
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-slate-700/50">
             {paged.map(c => {
               const exp = expiryStatus(c.contract_expiry)
               return (
                 <tr
                   key={c.id}
                   onClick={() => router.push(`/dashboard/customers/${c.id}`)}
-                  className="hover:bg-blue-50 cursor-pointer transition-colors duration-150"
+                  className="hover:bg-indigo-500/5 cursor-pointer transition-colors duration-150"
                 >
-                  <td className="px-4 py-3 font-semibold text-gray-900">{c.full_name}</td>
-                  <td className="px-4 py-3 text-gray-600">{c.email}</td>
-                  <td className="px-4 py-3 text-gray-600">{c.phone}</td>
-                  <td className="px-4 py-3 text-gray-600">{c.building_name}</td>
-                  <td className="px-4 py-3 text-gray-600">{c.area}</td>
+                  <td className="px-4 py-3 font-semibold text-white">{c.full_name}</td>
+                  <td className="px-4 py-3 text-slate-400">{c.email}</td>
+                  <td className="px-4 py-3 text-slate-400">{c.phone}</td>
+                  <td className="px-4 py-3 text-slate-400">{c.building_name}</td>
+                  <td className="px-4 py-3 text-slate-400">{c.area}</td>
                   <td className="px-4 py-3">
-                    <span className="text-gray-700">{fmtDate(c.contract_expiry)}</span>
+                    <span className="text-slate-300">{fmtDate(c.contract_expiry)}</span>
                     {exp === "soon" && (
-                      <span className="ml-2 inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                      <span className="ml-2 inline-flex items-center gap-1 text-xs bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full font-medium">
                         <AlertTriangle size={11} /> Expiring Soon
                       </span>
                     )}
                     {exp === "expired" && (
-                      <span className="ml-2 inline-flex items-center gap-1 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                      <span className="ml-2 inline-flex items-center gap-1 text-xs bg-rose-500/15 text-rose-400 px-2 py-0.5 rounded-full font-medium">
                         <AlertTriangle size={11} /> Expired
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 capitalize text-gray-600">{c.preferred_contact}</td>
+                  <td className="px-4 py-3 capitalize text-slate-400">{c.preferred_contact}</td>
                   <td className="px-4 py-3">
                     <button
                       onClick={e => openEdit(e, c)}
-                      className="p-1.5 hover:bg-gray-100 rounded-full transition-colors duration-150 text-gray-500"
+                      className="p-1.5 hover:bg-slate-700 rounded-full transition-colors duration-150 text-slate-400"
                     >
                       <Pencil size={15} />
                     </button>
@@ -212,7 +212,7 @@ export default function CustomersPage() {
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-gray-400 text-sm">
+                <td colSpan={8} className="px-4 py-12 text-center text-slate-500 text-sm">
                   {search ? `No customers match "${search}"` : "No customers yet. Add one to get started."}
                 </td>
               </tr>
@@ -231,15 +231,15 @@ export default function CustomersPage() {
       {/* Modal */}
       {showModal && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-start justify-center overflow-y-auto"
+          className="fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex items-start justify-center overflow-y-auto"
           onClick={() => setShowModal(false)}
         >
-          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 mt-16 mb-8" onClick={e => e.stopPropagation()}>
+          <div className="bg-slate-800 border border-slate-700/50 rounded-2xl shadow-2xl animate-scaleIn p-6 max-w-lg w-full mx-4 mt-16 mb-8" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 className="text-lg font-bold text-white">
                 {editId ? "Edit Customer" : "Add Customer"}
               </h2>
-              <button onClick={() => setShowModal(false)} className="p-1.5 hover:bg-gray-100 rounded-full">
+              <button onClick={() => setShowModal(false)} className="p-1.5 hover:bg-slate-700 rounded-full text-slate-400">
                 <X size={18} />
               </button>
             </div>
@@ -319,14 +319,14 @@ export default function CustomersPage() {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowModal(false)}
-                className="border border-red-300 text-red-600 rounded-lg px-4 py-2 text-sm hover:bg-red-50 transition-colors duration-150"
+                className="border border-slate-600 text-slate-300 rounded-lg px-4 py-2 text-sm hover:bg-slate-700 transition-colors duration-150"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving || !form.full_name || !form.email || !form.phone || !form.contract_expiry}
-                className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors duration-150"
+                className="bg-gradient-to-r from-indigo-500 to-violet-600 text-white rounded-lg px-4 py-2 text-sm hover:from-indigo-400 hover:to-violet-500 disabled:opacity-50 transition-colors duration-150"
               >
                 {saving ? "Saving…" : editId ? "Save Changes" : "Add Customer"}
               </button>

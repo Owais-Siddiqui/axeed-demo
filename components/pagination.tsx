@@ -24,14 +24,14 @@ export function Pagination({ total, page, pageSize, onPageChange, onPageSizeChan
   const pages = pageRange(page, totalPages)
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-white rounded-b-2xl flex-wrap gap-3">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-slate-700/50 bg-slate-800/30 rounded-b-2xl flex-wrap gap-3">
       {/* Rows per page */}
-      <div className="flex items-center gap-2 text-sm text-gray-500">
+      <div className="flex items-center gap-2 text-sm text-slate-400">
         <span>Rows per page:</span>
         <select
           value={pageSize}
           onChange={e => { onPageSizeChange(Number(e.target.value)); onPageChange(1) }}
-          className="border border-gray-300 rounded-md px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-slate-600 rounded-md px-2 py-1 text-sm text-slate-300 bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           {PAGE_SIZE_OPTIONS.map(s => (
             <option key={s} value={s}>{s}</option>
@@ -44,22 +44,22 @@ export function Pagination({ total, page, pageSize, onPageChange, onPageSizeChan
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="p-1.5 rounded-md hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           <ChevronLeft size={16} />
         </button>
 
         {pages.map((p, i) =>
           p === "…" ? (
-            <span key={`ellipsis-${i}`} className="px-2 text-gray-400 text-sm select-none">…</span>
+            <span key={`ellipsis-${i}`} className="px-2 text-slate-500 text-sm select-none">…</span>
           ) : (
             <button
               key={p}
               onClick={() => onPageChange(p)}
               className={`min-w-[2rem] h-8 rounded-md text-sm font-medium transition-colors ${
                 p === page
-                  ? "bg-blue-600 text-white"
-                  : "hover:bg-gray-100 text-gray-700"
+                  ? "bg-indigo-500 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]"
+                  : "hover:bg-slate-700 text-slate-300"
               }`}
             >
               {p}
@@ -70,14 +70,14 @@ export function Pagination({ total, page, pageSize, onPageChange, onPageSizeChan
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
-          className="p-1.5 rounded-md hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="p-1.5 rounded-md hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           <ChevronRight size={16} />
         </button>
       </div>
 
       {/* Count */}
-      <span className="text-sm text-gray-500">
+      <span className="text-sm text-slate-400">
         {from}–{to} of {total}
       </span>
     </div>

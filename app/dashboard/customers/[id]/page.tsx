@@ -52,16 +52,16 @@ function expiryStatus(dateStr: string): "expired" | "soon" | "ok" {
 // ─── Badges ──────────────────────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<Status, string> = {
-  OPEN: "bg-gray-100 text-gray-700",
-  ASSIGNED: "bg-blue-100 text-blue-700",
-  IN_PROGRESS: "bg-amber-100 text-amber-700",
-  COMPLETED: "bg-green-100 text-green-700",
+  OPEN: "bg-slate-700 text-slate-300",
+  ASSIGNED: "bg-blue-500/15 text-blue-400",
+  IN_PROGRESS: "bg-amber-500/15 text-amber-400",
+  COMPLETED: "bg-emerald-500/15 text-emerald-400",
 }
 
 const URGENCY_STYLES: Record<Urgency, string> = {
-  low: "bg-green-100 text-green-700",
-  medium: "bg-yellow-100 text-yellow-700",
-  high: "bg-red-100 text-red-700",
+  low: "bg-emerald-500/15 text-emerald-400",
+  medium: "bg-amber-500/15 text-amber-400",
+  high: "bg-rose-500/15 text-rose-400",
 }
 
 function StatusBadge({ status }: { status: Status }) {
@@ -85,10 +85,10 @@ function UrgencyBadge({ urgency }: { urgency: Urgency }) {
 function FieldRow({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-2">
-      <span className="text-gray-400 mt-0.5 flex-shrink-0">{icon}</span>
+      <span className="text-slate-500 mt-0.5 flex-shrink-0">{icon}</span>
       <div>
-        <p className="text-xs text-gray-500 mb-0.5">{label}</p>
-        <div className="text-sm text-gray-900">{children}</div>
+        <p className="text-xs text-slate-400 mb-0.5">{label}</p>
+        <div className="text-sm text-white">{children}</div>
       </div>
     </div>
   )
@@ -100,30 +100,30 @@ function TicketCard({ ticket, workerName }: { ticket: Ticket; workerName: string
   return (
     <Link
       href={`/dashboard/tickets/${ticket.id}`}
-      className="block bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md hover:border-blue-200 transition-all duration-150"
+      className="block bg-slate-800 border border-slate-700/50 rounded-xl p-4 hover:shadow-[0_0_15px_rgba(99,102,241,0.1)] hover:border-indigo-500/20 transition-all duration-150"
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="font-mono text-xs font-semibold text-gray-500">{ticket.ticket_ref}</span>
+        <span className="font-mono text-xs font-semibold text-slate-400">{ticket.ticket_ref}</span>
         <div className="flex items-center gap-1.5">
           <UrgencyBadge urgency={ticket.urgency} />
           <StatusBadge status={ticket.status} />
         </div>
       </div>
-      <div className="flex items-center gap-1.5 text-sm text-gray-700 mb-1">
-        <Wrench size={13} className="text-gray-400" />
+      <div className="flex items-center gap-1.5 text-sm text-slate-300 mb-1">
+        <Wrench size={13} className="text-slate-500" />
         <span className="capitalize font-medium">{ticket.job_type}</span>
       </div>
-      <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-        <Building2 size={12} className="text-gray-400" />
+      <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+        <Building2 size={12} className="text-slate-500" />
         <span className="font-mono">{ticket.property}</span>
       </div>
       {workerName && (
-        <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-2">
-          <HardHat size={12} className="text-gray-400" />
+        <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-2">
+          <HardHat size={12} className="text-slate-500" />
           <span>{workerName}</span>
         </div>
       )}
-      <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-2">
+      <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-2">
         <Clock size={12} />
         <span>{fmtDateTime(ticket.created_at)}</span>
       </div>
@@ -142,9 +142,9 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
   if (!customer) {
     return (
-      <div className="p-6 text-sm text-gray-400">
+      <div className="p-6 text-sm text-slate-400">
         Customer not found.{" "}
-        <button onClick={() => router.back()} className="text-blue-600 underline">Go back</button>
+        <button onClick={() => router.back()} className="text-indigo-400 underline">Go back</button>
       </div>
     )
   }
@@ -165,17 +165,17 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => router.push("/dashboard/customers")}
-          className="p-1.5 bg-gray-200 hover:bg-gray-300 rounded-full transition-colors duration-150 text-gray-700"
+          className="p-1.5 bg-slate-700 hover:bg-slate-600 rounded-full transition-colors duration-150 text-slate-300"
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-xl font-bold text-gray-900">{customer.full_name}</h1>
+        <h1 className="text-xl font-bold text-white">{customer.full_name}</h1>
       </div>
 
       <div className="flex flex-col gap-6">
         {/* Customer info card */}
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase mb-4">Customer Details</h2>
+        <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl shadow-sm p-6">
+          <h2 className="text-sm font-semibold text-slate-400 uppercase mb-4">Customer Details</h2>
           <div className="grid grid-cols-2 gap-x-8 gap-y-4">
             <FieldRow icon={<User size={16} />} label="Full Name">{customer.full_name}</FieldRow>
             <FieldRow icon={<Mail size={16} />} label="Email">{customer.email}</FieldRow>
@@ -185,22 +185,22 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
               {[customer.unit_number, customer.floor, customer.area, customer.city].filter(Boolean).join(", ")}
             </FieldRow>
             <FieldRow icon={<PhoneCall size={16} />} label="Emergency Contact">
-              {customer.emergency_contact ?? <span className="text-gray-400">—</span>}
+              {customer.emergency_contact ?? <span className="text-slate-500">—</span>}
             </FieldRow>
             <FieldRow icon={<ContactRound size={16} />} label="Preferred Contact">
               <span className="capitalize">{customer.preferred_contact}</span>
             </FieldRow>
             <FieldRow icon={<FileWarning size={16} />} label="Contract Expiry">
-              <span className={exp !== "ok" ? (exp === "expired" ? "text-red-600" : "text-amber-600") : ""}>
+              <span className={exp !== "ok" ? (exp === "expired" ? "text-rose-400" : "text-amber-400") : ""}>
                 {fmtDate(customer.contract_expiry)}
               </span>
               {exp === "soon" && (
-                <span className="ml-2 inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                <span className="ml-2 inline-flex items-center gap-1 text-xs bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full font-medium">
                   <AlertTriangle size={11} /> Expiring Soon
                 </span>
               )}
               {exp === "expired" && (
-                <span className="ml-2 inline-flex items-center gap-1 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                <span className="ml-2 inline-flex items-center gap-1 text-xs bg-rose-500/15 text-rose-400 px-2 py-0.5 rounded-full font-medium">
                   <AlertTriangle size={11} /> Expired
                 </span>
               )}
@@ -210,14 +210,14 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
         {/* Active tickets */}
         <div>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase mb-3">
+          <h2 className="text-sm font-semibold text-slate-400 uppercase mb-3">
             Active Tickets{" "}
-            <span className="ml-1 bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs normal-case font-semibold">
+            <span className="ml-1 bg-indigo-500/15 text-indigo-400 px-2 py-0.5 rounded-full text-xs normal-case font-semibold">
               {activeTickets.length}
             </span>
           </h2>
           {activeTickets.length === 0 ? (
-            <p className="text-sm text-gray-400">No active tickets.</p>
+            <p className="text-sm text-slate-400">No active tickets.</p>
           ) : (
             <div className="grid grid-cols-2 gap-4">
               {activeTickets.map(t => (
@@ -229,14 +229,14 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
         {/* Past tickets */}
         <div>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase mb-3">
+          <h2 className="text-sm font-semibold text-slate-400 uppercase mb-3">
             Past Tickets{" "}
-            <span className="ml-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs normal-case font-semibold">
+            <span className="ml-1 bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded-full text-xs normal-case font-semibold">
               {pastTickets.length}
             </span>
           </h2>
           {pastTickets.length === 0 ? (
-            <p className="text-sm text-gray-400">No completed tickets.</p>
+            <p className="text-sm text-slate-400">No completed tickets.</p>
           ) : (
             <div className="grid grid-cols-2 gap-4">
               {pastTickets.map(t => (
