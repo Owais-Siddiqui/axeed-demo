@@ -29,17 +29,20 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .eq("id", id)
     .single()
 
-  if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 })
+  if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 404 })
+
+  // Strip immutable fields that must not be written back to the DB
+  const { id: _id, ticket_ref: _ref, created_at: _ca, ...updateData } = body
 
   // Auto-assign status when a worker is being set and status isn't explicitly provided
-  if (body.worker_id && !body.status) {
+  if (updateData.worker_id && !updateData.status) {
     if (current.status === "OPEN") {
-      body.status = "ASSIGNED"
-      body.assigned_at = new Date().toISOString()
+      updateData.status = "ASSIGNED"
+      updateData.assigned_at = new Date().toISOString()
     }
   }
 
-  const { error } = await supabaseServer.from("tickets").update(body).eq("id", id)
+  const { error } = await supabaseServer.from("tickets").update(updateData).eq("id", id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // Automatically create activity events based on what changed
@@ -47,12 +50,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const events: Record<string, unknown>[] = []
 
   // Worker assignment changed
-  if ("worker_id" in body && body.worker_id !== current.worker_id) {
-    if (body.worker_id) {
+  if ("worker_id" in updateData && updateData.worker_id !== current.worker_id) {
+    if (updateData.worker_id) {
       const { data: worker } = await supabaseServer
         .from("workers")
         .select("full_name")
-        .eq("id", body.worker_id)
+        .eq("id", updateData.worker_id)
         .single()
       events.push({
         ticket_id: id,
@@ -73,8 +76,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   }
 
   // Status changed
-  if (body.status && body.status !== current.status) {
-    if (body.status === "IN_PROGRESS") {
+  if (updateData.status && updateData.status !== current.status) {
+    if (updateData.status === "IN_PROGRESS") {
       events.push({
         ticket_id: id,
         event_type: "STATUS_CHANGE",
@@ -82,7 +85,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         note: "Worker accepted the assignment and started working.",
         created_at: now,
       })
-    } else if (body.status === "COMPLETED") {
+    } else if (updateData.status === "COMPLETED") {
       events.push({
         ticket_id: id,
         event_type: "COMPLETED",
@@ -95,7 +98,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         ticket_id: id,
         event_type: "STATUS_CHANGE",
         actor: "Manager",
-        note: `Status changed from ${current.status} to ${body.status}.`,
+        note: `Status changed from ${current.status} to ${updateData.status}.`,
         created_at: now,
       })
     }
