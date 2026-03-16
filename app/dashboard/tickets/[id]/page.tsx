@@ -249,29 +249,6 @@ export default function TicketDetailPage() {
       updated_at: now,
       ...timestampUpdates,
     })
-
-    if (selectedStatus !== prevStatus) {
-      await addEvent({
-        id: "",
-        ticket_id: ticket!.id,
-        event_type: selectedStatus === "COMPLETED" ? "COMPLETED" : "STATUS_CHANGE",
-        actor: "Manager",
-        note: `Status changed from ${prevStatus} to ${selectedStatus}.`,
-        created_at: now,
-      })
-    }
-    if (selectedWorkerId !== prevWorker) {
-      await addEvent({
-        id: "",
-        ticket_id: ticket!.id,
-        event_type: "ASSIGNED",
-        actor: "Manager",
-        note: selectedWorkerId
-          ? `Assigned to ${workers.find(w => w.id === selectedWorkerId)?.full_name ?? "worker"}.`
-          : "Worker unassigned.",
-        created_at: now,
-      })
-    }
   }
 
   async function handleAddNote() {

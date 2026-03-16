@@ -136,7 +136,11 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify(ticket),
     })
     if (res.ok) {
-      const { data } = await res.json()
+      const { data, event } = await res.json()
+      setTickets(prev => prev.some(t => t.id === (data as Ticket).id) ? prev : [data as Ticket, ...prev])
+      if (event) {
+        setTicketEvents(prev => prev.some(e => e.id === (event as TicketEvent).id) ? prev : [...prev, event as TicketEvent])
+      }
       return data as Ticket
     }
     return null
@@ -148,7 +152,17 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updates),
     })
-    if (res.ok) setTickets(prev => prev.map(t => (t.id === id ? { ...t, ...updates } : t)))
+    if (res.ok) {
+      setTickets(prev => prev.map(t => (t.id === id ? { ...t, ...updates } : t)))
+      const { events } = await res.json()
+      if (Array.isArray(events) && events.length > 0) {
+        setTicketEvents(prev => {
+          const existingIds = new Set(prev.map(e => e.id))
+          const newEvents = (events as TicketEvent[]).filter(e => !existingIds.has(e.id))
+          return newEvents.length > 0 ? [...prev, ...newEvents] : prev
+        })
+      }
+    }
   }
 
   async function deleteTicket(id: string) {
@@ -202,10 +216,12 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(worker),
     })
-    if (res.ok) {
-      const { data } = await res.json()
-      setWorkers(prev => [...prev, data as Worker].sort((a, b) => a.full_name.localeCompare(b.full_name)))
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error ?? "Failed to add worker")
     }
+    const { data } = await res.json()
+    setWorkers(prev => [...prev, data as Worker].sort((a, b) => a.full_name.localeCompare(b.full_name)))
   }
 
   async function updateWorker(id: string, updates: Partial<Worker>) {

@@ -64,13 +64,17 @@ export async function POST(req: NextRequest) {
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  await supabaseServer.from("ticket_events").insert({
-    ticket_id: data.id,
-    event_type: "CREATED",
-    actor: "System",
-    note: `Ticket created via API. Job type: ${data.job_type}, Urgency: ${data.urgency}.`,
-    created_at: now,
-  })
+  const { data: eventData } = await supabaseServer
+    .from("ticket_events")
+    .insert({
+      ticket_id: data.id,
+      event_type: "CREATED",
+      actor: "System",
+      note: `Ticket created. Job type: ${data.job_type}, Urgency: ${data.urgency}.`,
+      created_at: now,
+    })
+    .select()
+    .single()
 
-  return NextResponse.json({ data }, { status: 201 })
+  return NextResponse.json({ data, event: eventData ?? null }, { status: 201 })
 }

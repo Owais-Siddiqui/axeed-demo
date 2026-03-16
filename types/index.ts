@@ -63,6 +63,7 @@ export interface Ticket {
 export interface TicketEvent {
   id: string;
   ticket_id: string;
+  ticket_ref?: string;
   event_type: "CREATED" | "ASSIGNED" | "STATUS_CHANGE" | "NOTE" | "COMPLETED";
   actor: string;
   note: string | null;

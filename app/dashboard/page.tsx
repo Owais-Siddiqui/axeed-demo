@@ -203,7 +203,7 @@ const SELECT_CLS =
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { customers, workers, tickets, addTicket, deleteTicket, addEvent, dashboardState, setDashboardState } = useTickets()
+  const { customers, workers, tickets, addTicket, deleteTicket, dashboardState, setDashboardState } = useTickets()
 
   // Destructure persistent state from context
   const { view, search, filterStatus, filterJobType, filterUrgency, filterDatePreset, filterDateFrom, filterDateTo, activeCard } = dashboardState
@@ -364,17 +364,7 @@ export default function DashboardPage() {
       created_at: now,
       updated_at: now,
     }
-    const created = await addTicket(newTicket)
-    if (created) {
-      await addEvent({
-        id: "",
-        ticket_id: created.id,
-        event_type: "CREATED",
-        actor: "Manager",
-        note: `Ticket created manually. Job type: ${form.jobType}, Urgency: ${form.urgency}.`,
-        created_at: now,
-      })
-    }
+    await addTicket(newTicket)
     setShowAddModal(false)
     setForm(EMPTY_FORM)
   }

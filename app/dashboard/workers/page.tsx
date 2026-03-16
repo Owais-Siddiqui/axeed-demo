@@ -102,6 +102,7 @@ export default function WorkersPage() {
   const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState<typeof BLANK>(BLANK)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [toggling, setToggling] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
@@ -124,11 +125,13 @@ export default function WorkersPage() {
   function openAdd() {
     setEditId(null)
     setForm(BLANK)
+    setSaveError(null)
     setShowModal(true)
   }
 
   function openEdit(e: React.MouseEvent, w: Worker) {
     e.stopPropagation()
+    setSaveError(null)
     setEditId(w.id)
     const skills = Array.isArray(w.skills)
       ? w.skills
@@ -163,6 +166,7 @@ export default function WorkersPage() {
   async function handleSave() {
     if (!form.full_name || !form.phone) return
     setSaving(true)
+    setSaveError(null)
     try {
       if (editId) {
         await updateWorker(editId, {
@@ -185,6 +189,8 @@ export default function WorkersPage() {
         await addWorker(newWorker)
       }
       setShowModal(false)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Something went wrong")
     } finally {
       setSaving(false)
     }
@@ -359,7 +365,13 @@ export default function WorkersPage() {
               </p>
             </div>
 
-            <div className="flex justify-end gap-3 mt-6">
+            {saveError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-4">
+                {saveError}
+              </p>
+            )}
+
+            <div className="flex justify-end gap-3 mt-4">
               <button
                 onClick={() => setShowModal(false)}
                 className="border border-red-300 text-red-600 rounded-lg px-4 py-2 text-sm hover:bg-red-50 transition-colors duration-150"
