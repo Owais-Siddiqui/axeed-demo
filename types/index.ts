@@ -29,6 +29,7 @@ export interface Customer {
 export interface Worker {
   id: string;
   full_name: string;
+  email: string;
   skills: string[];
   phone: string;
   is_active: boolean;

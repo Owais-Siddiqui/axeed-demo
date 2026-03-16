@@ -1,18 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useTickets } from "@/lib/store"
 import { Worker } from "@/types/index"
-import { Plus, Pencil, X } from "lucide-react"
+import { Plus, Pencil, X, Search, ChevronDown } from "lucide-react"
 import { Pagination } from "@/components/pagination"
 
-// ─── Blank form ───────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const SKILL_OPTIONS = ["Plumbing", "Electrical", "HVAC", "Carpentry", "General", "Painting", "Tiling", "Landscaping"]
 
 const BLANK = {
   full_name: "",
+  email: "",
   phone: "",
-  skills: "",
+  skills: [] as string[],
   is_active: true,
   open_tickets: 0,
 }
@@ -23,6 +26,72 @@ const INPUT_CLS =
   "border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
 const LABEL_CLS = "block text-sm font-medium text-gray-700 mb-1"
 
+// ─── Skills Dropdown ──────────────────────────────────────────────────────────
+
+function SkillsDropdown({
+  selected: selectedProp,
+  onChange,
+}: {
+  selected: string[]
+  onChange: (skills: string[]) => void
+}) {
+  const selected = Array.isArray(selectedProp) ? selectedProp : []
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  function toggle(skill: string) {
+    onChange(
+      selected.includes(skill)
+        ? selected.filter(s => s !== skill)
+        : [...selected, skill]
+    )
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full flex items-center justify-between bg-white"
+      >
+        <span className={selected.length === 0 ? "text-gray-400" : "text-gray-900"}>
+          {selected.length === 0
+            ? "Select skills…"
+            : selected.join(", ")}
+        </span>
+        <ChevronDown size={14} className={`text-gray-400 transition-transform duration-150 ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+          {SKILL_OPTIONS.map(skill => (
+            <label
+              key={skill}
+              className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm text-gray-800"
+            >
+              <input
+                type="checkbox"
+                checked={selected.includes(skill)}
+                onChange={() => toggle(skill)}
+                className="accent-blue-600 w-4 h-4 rounded"
+              />
+              {skill}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function WorkersPage() {
@@ -31,12 +100,26 @@ export default function WorkersPage() {
 
   const [showModal, setShowModal] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState(BLANK)
+  const [form, setForm] = useState<typeof BLANK>(BLANK)
   const [saving, setSaving] = useState(false)
+  const [toggling, setToggling] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
+  const [search, setSearch] = useState("")
 
-  const paged = workers.slice((page - 1) * pageSize, page * pageSize)
+  const filtered = useMemo(() => {
+    if (!search.trim()) return workers
+    const q = search.toLowerCase()
+    return workers.filter(
+      w =>
+        w.full_name.toLowerCase().includes(q) ||
+        w.phone.toLowerCase().includes(q) ||
+        (w.email ?? "").toLowerCase().includes(q) ||
+        w.skills.some(s => s.toLowerCase().includes(q))
+    )
+  }, [workers, search])
+
+  const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
 
   function openAdd() {
     setEditId(null)
@@ -47,10 +130,16 @@ export default function WorkersPage() {
   function openEdit(e: React.MouseEvent, w: Worker) {
     e.stopPropagation()
     setEditId(w.id)
+    const skills = Array.isArray(w.skills)
+      ? w.skills
+      : typeof w.skills === "string"
+        ? (w.skills as string).split(",").map(s => s.trim()).filter(Boolean)
+        : []
     setForm({
       full_name: w.full_name,
+      email: w.email ?? "",
       phone: w.phone,
-      skills: w.skills.join(", "),
+      skills,
       is_active: w.is_active,
       open_tickets: w.open_tickets,
     })
@@ -61,28 +150,36 @@ export default function WorkersPage() {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
+  async function handleToggleActive(e: React.MouseEvent, w: Worker) {
+    e.stopPropagation()
+    setToggling(w.id)
+    try {
+      await updateWorker(w.id, { is_active: !w.is_active })
+    } finally {
+      setToggling(null)
+    }
+  }
+
   async function handleSave() {
     if (!form.full_name || !form.phone) return
     setSaving(true)
     try {
-      const skillsArray = form.skills
-        .split(",")
-        .map(s => s.trim())
-        .filter(Boolean)
-
       if (editId) {
         await updateWorker(editId, {
           full_name: form.full_name,
+          email: form.email,
           phone: form.phone,
-          skills: skillsArray,
+          skills: form.skills,
+          is_active: form.is_active,
         })
       } else {
         const newWorker: Worker = {
           id: "",
           full_name: form.full_name,
+          email: form.email,
           phone: form.phone,
-          skills: skillsArray,
-          is_active: false,
+          skills: form.skills,
+          is_active: form.is_active,
           open_tickets: 0,
         }
         await addWorker(newWorker)
@@ -99,7 +196,11 @@ export default function WorkersPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Workers</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{workers.length} total</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {filtered.length !== workers.length
+              ? `${filtered.length} of ${workers.length} total`
+              : `${workers.length} total`}
+          </p>
         </div>
         <button
           onClick={openAdd}
@@ -108,6 +209,18 @@ export default function WorkersPage() {
           <Plus size={16} />
           Add Worker
         </button>
+      </div>
+
+      {/* Search */}
+      <div className="mb-4 relative">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <input
+          type="text"
+          value={search}
+          onChange={e => { setSearch(e.target.value); setPage(1) }}
+          placeholder="Search by name, phone, or skill…"
+          className="border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full max-w-sm bg-white"
+        />
       </div>
 
       {/* Table */}
@@ -142,13 +255,18 @@ export default function WorkersPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                        w.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                    <button
+                      onClick={e => handleToggleActive(e, w)}
+                      disabled={toggling === w.id}
+                      title={w.is_active ? "Click to set Inactive" : "Click to set Active"}
+                      className={`text-xs font-semibold px-2 py-0.5 rounded-full transition-colors duration-150 disabled:opacity-50 ${
+                        w.is_active
+                          ? "bg-green-100 text-green-700 hover:bg-green-200"
+                          : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                       }`}
                     >
                       {w.is_active ? "Active" : "Inactive"}
-                    </span>
+                    </button>
                   </td>
                   <td className="px-4 py-3 text-gray-700 font-mono">{w.open_tickets}</td>
                   <td className="px-4 py-3">
@@ -161,17 +279,17 @@ export default function WorkersPage() {
                   </td>
                 </tr>
               ))}
-              {workers.length === 0 && (
+              {filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-gray-400 text-sm">
-                    No workers yet. Add one to get started.
+                    {search ? "No workers match your search." : "No workers yet. Add one to get started."}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
           <Pagination
-            total={workers.length}
+            total={filtered.length}
             page={page}
             pageSize={pageSize}
             onPageChange={setPage}
@@ -203,21 +321,42 @@ export default function WorkersPage() {
               </div>
 
               <div>
+                <label className={LABEL_CLS}>Email</label>
+                <input className={INPUT_CLS} type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="worker@example.com" />
+              </div>
+
+              <div>
                 <label className={LABEL_CLS}>Phone *</label>
                 <input className={INPUT_CLS} value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="+971551234567" />
               </div>
 
               <div>
                 <label className={LABEL_CLS}>Skills</label>
-                <input
-                  className={INPUT_CLS}
-                  value={form.skills}
-                  onChange={e => set("skills", e.target.value)}
-                  placeholder="plumbing, electrical, hvac"
+                <SkillsDropdown
+                  selected={form.skills}
+                  onChange={skills => set("skills", skills)}
                 />
-                <p className="text-xs text-gray-400 mt-1">Comma-separated list</p>
               </div>
 
+              <div className="flex items-center justify-between py-1">
+                <label className={LABEL_CLS + " mb-0"}>Active Status</label>
+                <button
+                  type="button"
+                  onClick={() => set("is_active", !form.is_active)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+                    form.is_active ? "bg-green-500" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                      form.is_active ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 -mt-3">
+                {form.is_active ? "Worker is active and can be assigned tickets." : "Worker is inactive and won't appear in assignment options."}
+              </p>
             </div>
 
             <div className="flex justify-end gap-3 mt-6">

@@ -1,6 +1,6 @@
 "use client"
 
-import { use } from "react"
+import { use, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useTickets } from "@/lib/store"
@@ -13,6 +13,7 @@ import {
   User,
   Clock,
   TicketCheck,
+  Mail,
 } from "lucide-react"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -114,8 +115,9 @@ function TicketCard({ ticket, customerName }: { ticket: Ticket; customerName: st
 
 export default function WorkerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { workers, tickets, customers } = useTickets()
+  const { workers, tickets, customers, updateWorker } = useTickets()
   const router = useRouter()
+  const [toggling, setToggling] = useState(false)
 
   const worker = workers.find(w => w.id === id)
 
@@ -126,6 +128,15 @@ export default function WorkerDetailPage({ params }: { params: Promise<{ id: str
         <button onClick={() => router.back()} className="text-blue-600 underline">Go back</button>
       </div>
     )
+  }
+
+  async function handleToggleActive() {
+    setToggling(true)
+    try {
+      await updateWorker(id, { is_active: !worker.is_active })
+    } finally {
+      setToggling(false)
+    }
   }
 
   const workerTickets = tickets.filter(t => t.worker_id === id)
@@ -147,13 +158,18 @@ export default function WorkerDetailPage({ params }: { params: Promise<{ id: str
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-xl font-bold text-gray-900">{worker.full_name}</h1>
-        <span
-          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-            worker.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+        <button
+          onClick={handleToggleActive}
+          disabled={toggling}
+          title={worker.is_active ? "Click to set Inactive" : "Click to set Active"}
+          className={`text-xs font-semibold px-2 py-0.5 rounded-full transition-colors duration-150 disabled:opacity-50 ${
+            worker.is_active
+              ? "bg-green-100 text-green-700 hover:bg-green-200"
+              : "bg-gray-100 text-gray-500 hover:bg-gray-200"
           }`}
         >
-          {worker.is_active ? "Active" : "Inactive"}
-        </span>
+          {toggling ? "Saving…" : worker.is_active ? "Active" : "Inactive"}
+        </button>
       </div>
 
       <div className="flex flex-col gap-6">
@@ -163,6 +179,7 @@ export default function WorkerDetailPage({ params }: { params: Promise<{ id: str
           <div className="grid grid-cols-2 gap-x-8 gap-y-4">
             <FieldRow icon={<User size={16} />} label="Full Name">{worker.full_name}</FieldRow>
             <FieldRow icon={<Phone size={16} />} label="Phone">{worker.phone}</FieldRow>
+            <FieldRow icon={<Mail size={16} />} label="Email">{worker.email || <span className="text-gray-400">—</span>}</FieldRow>
             <FieldRow icon={<Wrench size={16} />} label="Skills">
               {worker.skills.length > 0 ? (
                 <div className="flex flex-wrap gap-1 mt-0.5">
@@ -178,6 +195,25 @@ export default function WorkerDetailPage({ params }: { params: Promise<{ id: str
             </FieldRow>
             <FieldRow icon={<TicketCheck size={16} />} label="Open Tickets">
               <span className="font-mono font-semibold">{worker.open_tickets}</span>
+            </FieldRow>
+            <FieldRow icon={<span className="w-4 h-4 flex items-center justify-center text-gray-400">⚡</span>} label="Active Status">
+              <div className="flex items-center gap-2 mt-0.5">
+                <button
+                  type="button"
+                  onClick={handleToggleActive}
+                  disabled={toggling}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 ${
+                    worker.is_active ? "bg-green-500" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                      worker.is_active ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+                <span className="text-sm text-gray-700">{worker.is_active ? "Active" : "Inactive"}</span>
+              </div>
             </FieldRow>
           </div>
         </div>
