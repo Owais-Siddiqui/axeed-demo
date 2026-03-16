@@ -238,16 +238,62 @@ export default function DashboardPage() {
 
   // ── Stats ──────────────────────────────────────────────────────────────────
 
+  // Base-filtered tickets: apply all filters except activeCard, used for stat card counts
+  const baseFilteredTickets = useMemo(() => {
+    const now = new Date()
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+    return tickets.filter(ticket => {
+      if (filterStatus   && ticket.status    !== filterStatus)   return false
+      if (filterJobType  && ticket.job_type  !== filterJobType)  return false
+      if (filterUrgency  && ticket.urgency   !== filterUrgency)  return false
+
+      if (filterDatePreset) {
+        const created = new Date(ticket.created_at)
+        if (filterDatePreset === "today") {
+          const end = new Date(todayStart.getTime() + 86_400_000)
+          if (created < todayStart || created >= end) return false
+        } else if (filterDatePreset === "week") {
+          const weekStart = new Date(todayStart.getTime() - todayStart.getDay() * 86_400_000)
+          const weekEnd = new Date(weekStart.getTime() + 7 * 86_400_000)
+          if (created < weekStart || created >= weekEnd) return false
+        } else if (filterDatePreset === "month") {
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+          const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+          if (created < monthStart || created >= monthEnd) return false
+        } else if (filterDatePreset === "custom") {
+          if (filterDateFrom && created < new Date(filterDateFrom)) return false
+          if (filterDateTo) {
+            const to = new Date(filterDateTo)
+            to.setDate(to.getDate() + 1)
+            if (created >= to) return false
+          }
+        }
+      }
+
+      if (search) {
+        const customer = customers.find(c => c.email === ticket.customer_email)
+        const q = search.toLowerCase()
+        const hit =
+          ticket.ticket_ref.toLowerCase().includes(q) ||
+          ticket.property.toLowerCase().includes(q) ||
+          (customer?.full_name.toLowerCase().includes(q) ?? false)
+        if (!hit) return false
+      }
+      return true
+    })
+  }, [tickets, filterStatus, filterJobType, filterUrgency, filterDatePreset, filterDateFrom, filterDateTo, search, customers])
+
   const stats = useMemo(
     () => ({
-      total: tickets.length,
-      open: tickets.filter(t => t.status === "OPEN").length,
-      assigned: tickets.filter(t => t.status === "ASSIGNED").length,
-      inProgress: tickets.filter(t => t.status === "IN_PROGRESS").length,
-      completed: tickets.filter(t => t.status === "COMPLETED").length,
-      overdue: tickets.filter(isOverdue).length,
+      total: baseFilteredTickets.length,
+      open: baseFilteredTickets.filter(t => t.status === "OPEN").length,
+      assigned: baseFilteredTickets.filter(t => t.status === "ASSIGNED").length,
+      inProgress: baseFilteredTickets.filter(t => t.status === "IN_PROGRESS").length,
+      completed: baseFilteredTickets.filter(t => t.status === "COMPLETED").length,
+      overdue: baseFilteredTickets.filter(isOverdue).length,
     }),
-    [tickets]
+    [baseFilteredTickets]
   )
 
   const statCards = [

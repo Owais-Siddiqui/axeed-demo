@@ -194,7 +194,7 @@ export default function WorkerDetailPage({ params }: { params: Promise<{ id: str
               )}
             </FieldRow>
             <FieldRow icon={<TicketCheck size={16} />} label="Open Tickets">
-              <span className="font-mono font-semibold">{worker.open_tickets}</span>
+              <span className="font-mono font-semibold">{activeTickets.length}</span>
             </FieldRow>
             <FieldRow icon={<span className="w-4 h-4 flex items-center justify-center text-slate-500">⚡</span>} label="Active Status">
               <div className="flex items-center gap-2 mt-0.5">
