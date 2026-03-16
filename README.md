@@ -386,3 +386,17 @@ axeed-demo/
 └── supabase/
     └── schema.sql              # Full DB schema + seed data
 ```
+
+
+
+What Worked Well
+* Claude was the strongest for code generation, especially the n8n JavaScript snippets and HTML email templates. Very precise with context when I gave it the exact JSON structure, it mapped fields correctly first try
+* AI extraction in n8n (Information Extractor node) worked well for pulling structured data like job type, urgency, and summary from free text tenant messages
+* Iterating fast going from a raw email like "my AC stopped working" to a structured ticket with AI summary, customer lookup, assignment, and email notification in one workflow
+
+What Didn't
+* n8n Cloud + localhost was a friction, took a few attempts to realise the tunnel was needed, not an app issue
+* AI occasionally wraps output in markdown code blocks instead of raw HTML, needed a clean up node
+* Claude credits ran out mid-development, the Pro plan usage limits hit at the worst time, breaking the workflow mid-build and forcing a pause until limits reset
+* Claude extension had friction getting it set up and integrated into the dev environment, not as plug-and-play as expected
+* Antigravity was underwhelming for this use case struggled with n8n specific context and workflow logic, better suited for standard code than automation flows
