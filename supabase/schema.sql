@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS customers (
 CREATE TABLE IF NOT EXISTS workers (
   id           TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   full_name    TEXT NOT NULL,
+  email        TEXT NOT NULL UNIQUE,
   skills       TEXT[] NOT NULL DEFAULT '{}',
   phone        TEXT NOT NULL,
   is_active    BOOLEAN NOT NULL DEFAULT true,
@@ -127,10 +128,10 @@ INSERT INTO customers VALUES
 -- ─── Seed: Workers ───────────────────────────────────────────────────────────
 
 INSERT INTO workers VALUES
-  ('w1', 'Khalid Rashid',   ARRAY['plumbing','general'],    '+971501111111', true,  3),
-  ('w2', 'Hassan Ali',      ARRAY['electrical','hvac'],     '+971502222222', true,  5),
-  ('w3', 'Tariq Saeed',     ARRAY['carpentry','general'],   '+971503333333', true,  1),
-  ('w4', 'Mohammed Nasser', ARRAY['hvac','plumbing'],       '+971504444444', false, 0);
+  ('w1', 'Khalid Rashid',   'khalid@facilitiesdesk.com',   ARRAY['plumbing','general'],    '+971501111111', true,  3),
+  ('w2', 'Hassan Ali',      'hassan@facilitiesdesk.com',   ARRAY['electrical','hvac'],     '+971502222222', true,  5),
+  ('w3', 'Tariq Saeed',     'tariqw@facilitiesdesk.com',   ARRAY['carpentry','general'],   '+971503333333', true,  1),
+  ('w4', 'Mohammed Nasser', 'mohammed@facilitiesdesk.com', ARRAY['hvac','plumbing'],       '+971504444444', false, 0);
 
 -- ─── Seed: Tickets ───────────────────────────────────────────────────────────
 
