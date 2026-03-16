@@ -1,4 +1,22 @@
 export type Urgency = "low" | "medium" | "high";
+export type UserRole = "admin" | "customer" | "worker";
+
+export interface UserAccount {
+  id: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  linked_id: string | null;
+}
+
+export interface AuthSession {
+  id: string;
+  email: string;
+  role: UserRole;
+  linkedId: string | null;
+  name: string;
+}
+
 export type Status = "OPEN" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED";
 
 export interface Attachment {

@@ -5,6 +5,14 @@
 
 -- ─── Tables ───────────────────────────────────────────────────────────────────
 
+CREATE TABLE IF NOT EXISTS user_accounts (
+  id        TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  email     TEXT NOT NULL UNIQUE,
+  password  TEXT NOT NULL,
+  role      TEXT NOT NULL,       -- 'admin' | 'customer' | 'worker'
+  linked_id TEXT                 -- customer id or worker id (NULL for admin)
+);
+
 CREATE TABLE IF NOT EXISTS customers (
   id               TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   full_name        TEXT NOT NULL,
@@ -65,11 +73,13 @@ CREATE TABLE IF NOT EXISTS ticket_events (
 
 -- ─── Permissions (no auth — anon full access) ─────────────────────────────────
 
+ALTER TABLE user_accounts  DISABLE ROW LEVEL SECURITY;
 ALTER TABLE customers     DISABLE ROW LEVEL SECURITY;
 ALTER TABLE workers       DISABLE ROW LEVEL SECURITY;
 ALTER TABLE tickets       DISABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_events DISABLE ROW LEVEL SECURITY;
 
+GRANT ALL ON user_accounts  TO anon;
 GRANT ALL ON customers     TO anon;
 GRANT ALL ON workers       TO anon;
 GRANT ALL ON tickets       TO anon;
@@ -77,7 +87,28 @@ GRANT ALL ON ticket_events TO anon;
 
 -- ─── Clear existing seed data (safe to re-run) ───────────────────────────────
 
-TRUNCATE ticket_events, tickets, workers, customers CASCADE;
+TRUNCATE ticket_events, tickets, workers, customers, user_accounts CASCADE;
+
+-- ─── Seed: User Accounts ─────────────────────────────────────────────────────
+
+INSERT INTO user_accounts (id, email, password, role, linked_id) VALUES
+  ('ua0',  'admin@facilitiesdesk.com',  'admin123',    'admin',    NULL),
+  -- Customers (linked to customer ids c1–c10)
+  ('ua1',  'ahmed.mansoori@email.com',  'ahmed123',    'customer', 'c1'),
+  ('ua2',  'sara.ibrahim@email.com',    'sara123',     'customer', 'c2'),
+  ('ua3',  'omar.farooq@email.com',     'omar123',     'customer', 'c3'),
+  ('ua4',  'fatima.noor@email.com',     'fatima123',   'customer', 'c4'),
+  ('ua5',  'rania.hassan@email.com',    'rania123',    'customer', 'c5'),
+  ('ua6',  'yousef.zaabi@email.com',    'yousef123',   'customer', 'c6'),
+  ('ua7',  'layla.mahmoud@email.com',   'layla123',    'customer', 'c7'),
+  ('ua8',  'bilal.qureshi@email.com',   'bilal123',    'customer', 'c8'),
+  ('ua9',  'mariam.ketbi@email.com',    'mariam123',   'customer', 'c9'),
+  ('ua10', 'tariq.binzayed@email.com',  'tariq123',    'customer', 'c10'),
+  -- Workers (linked to worker ids w1–w4)
+  ('ua11', 'khalid@facilitiesdesk.com',   'khalid123',   'worker',   'w1'),
+  ('ua12', 'hassan@facilitiesdesk.com',   'hassan123',   'worker',   'w2'),
+  ('ua13', 'tariqw@facilitiesdesk.com',   'tariqw123',   'worker',   'w3'),
+  ('ua14', 'mohammed@facilitiesdesk.com', 'mohammed123', 'worker',   'w4');
 
 -- ─── Seed: Customers ─────────────────────────────────────────────────────────
 
